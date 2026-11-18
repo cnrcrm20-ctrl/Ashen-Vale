@@ -31,8 +31,12 @@ if command -v xvfb-run >/dev/null; then
 fi
 "$GODOT" --headless --path game --export-release Android "$OUT/episode1-unsigned.apk" >build/export.log 2>&1 || { tail -80 build/export.log; exit 1; }
 BT=$(find "$ANDROID_HOME/build-tools" -maxdepth 1 -mindepth 1 -type d | sort -V | tail -1)
-"$BT/zipalign" -f -p 4 "$OUT/episode1-unsigned.apk" "$OUT/Ashen-Vale-Episode-1.apk"; rm "$OUT/episode1-unsigned.apk"
-"$BT/aapt" dump badging "$OUT/Ashen-Vale-Episode-1.apk" | head -60 >build/badging.log || true
+"$BT/zipalign" -f -P 16 4 "$OUT/episode1-unsigned.apk" "$OUT/Ashen-Vale-Episode-1.apk"; rm "$OUT/episode1-unsigned.apk"
+"$BT/zipalign" -c -P 16 4 "$OUT/Ashen-Vale-Episode-1.apk"
+"$BT/aapt" dump badging "$OUT/Ashen-Vale-Episode-1.apk" | grep -Ev "^application-label-|^application-icon-" >build/badging.log
+if grep -q "android.permission.INTERNET" build/badging.log; then exit 1; fi
+grep -q "native-code:.*arm64-v8a.*x86_64" build/badging.log
+grep -q ^launchable-activity build/badging.log
 cat build/badging.log; grep -q "package: name='com.ashenvale.episodeone'" build/badging.log
 unzip -tq "$OUT/Ashen-Vale-Episode-1.apk" >/dev/null
 sha256sum "$OUT/Ashen-Vale-Episode-1.apk"

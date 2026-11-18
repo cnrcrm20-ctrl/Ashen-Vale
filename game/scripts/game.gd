@@ -107,6 +107,7 @@ var round_no = -1
 var lookout
 var watch_ring
 var practice_disc
+var movement_logged=false
 var course_wave = 0.
 var world
 var hero
@@ -240,6 +241,7 @@ func fit_safe():
 func open_title():
 	active = false
 	mode = "title"
+	print("AV_READY title")
 	ui.title(FileAccess.file_exists(SLOT), slot_done())
 	fit_safe()
 	audio.score("kirecdam")
@@ -365,7 +367,7 @@ func build_zone(z: int):
 	hero = Actor.new()
 	world.add_child(hero)
 	hero.make("İlyan")
-	hero.position = world.loc(0, 0)
+	hero.position = world.loc(8,1) if zone==0 else world.loc(0,0)
 	hero.heading = PI
 	hero.rotation.y = PI
 	yaw = 0
@@ -405,6 +407,7 @@ func enter(i: int, restore = false):
 		practice_disc.queue_free()
 	practice_disc = null
 	index = i
+	print("AV_BEAT ",i)
 	beat = beats[index]
 	var different = int(beat.zone) != zone
 	if different:
@@ -451,6 +454,7 @@ func enter(i: int, restore = false):
 
 func explore():
 	mode = "explore"
+	print("AV_WALK")
 	ui.gameplay()
 	clear_input()
 	world.way.visible = options.guide
@@ -516,6 +520,7 @@ func conversation(pages: Array, continuation: String, at: Vector3):
 
 
 func show_line():
+	print("AV_LINE ",index,":",line_no)
 	var ln = lines[line_no]
 	ui.dialogue(ln[0], ln[1], "%02d  /  %02d" % [line_no + 1, lines.size()])
 	narrate(ln[1])
@@ -989,6 +994,9 @@ func walk(dt):
 	var v = p - old
 	var speed = Vector2(v.x, v.z).length() / dt
 	hero.motion(speed, Vector3(v.x, 0, v.z).normalized(), dt)
+	if speed>.55 and not movement_logged:
+		movement_logged=true
+		print("AV_MOVED")
 	last_step += speed * dt
 	if last_step > 1.18:
 		last_step = 0.
@@ -1215,6 +1223,7 @@ func pause_game():
 
 func show_settings():
 	mode = "settings"
+	print("AV_MENU settings")
 	ui.basic(
 		"Seçenekler",
 		"GÖRÜNTÜ · SES · ERİŞİLEBİLİRLİK",
