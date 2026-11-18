@@ -296,7 +296,9 @@ func start(restore: bool):
 	index = clampi(int(old.get("index", 0)), 0, beats.size() - 1)
 	records = old.get("records", {})
 	findings = old.get("findings", [])
-	learned = old.get("learned", [])
+	learned = []
+	for spell in old.get("learned", []):
+		if int(spell) in [0,1,2,3] and not learned.has(int(spell)): learned.append(int(spell))
 	flags = old.get("flags", {})
 	selected = clampi(int(old.get("selected", 0)), 0, 3)
 	mask = int(old.get("mask", 0))
@@ -792,7 +794,7 @@ func _physics_process(dt):
 		if ribbon_time <= 0:
 			explore()
 	if mode in ["explore", "ribbon", "dialog", "choice", "ritual"]:
-		world.frame(delta, hero.position)
+		world.frame(delta, hero.position, trail)
 		for n in clue_nodes + lore_nodes:
 			if is_instance_valid(n) and n.visible:
 				n.rotation.y += delta * 1.2

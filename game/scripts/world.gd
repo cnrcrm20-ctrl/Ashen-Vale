@@ -641,14 +641,16 @@ func stage(b: Dictionary):
 	target_pos = point(b.at)
 	way.position = target_pos + Vector3.UP * .08
 	if people.has(b.model):
+		people[b.model].show()
 		people[b.model].position = target_pos
 
 
-func frame(delta: float, player: Vector3):
+func frame(delta: float, player: Vector3, walking_guide=false):
 	clock += delta
 	if ring:
 		ring.scale = Vector3.ONE * (1.0 + sin(clock * 2) * .045)
 	for actor in actors:
+		if walking_guide and actor.title=="Tamar": continue
 		if actor.position.distance_squared_to(player) < 42:
 			actor.face(player)
 		actor.motion(0, Vector3.ZERO, delta)
