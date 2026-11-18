@@ -298,7 +298,8 @@ func start(restore: bool):
 	findings = old.get("findings", [])
 	learned = []
 	for spell in old.get("learned", []):
-		if int(spell) in [0,1,2,3] and not learned.has(int(spell)): learned.append(int(spell))
+		if int(spell) in [0, 1, 2, 3] and not learned.has(int(spell)):
+			learned.append(int(spell))
 	flags = old.get("flags", {})
 	selected = clampi(int(old.get("selected", 0)), 0, 3)
 	mask = int(old.get("mask", 0))

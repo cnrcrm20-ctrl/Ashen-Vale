@@ -285,22 +285,34 @@ func tree(p: Vector3, h: float, cypress = false):
 
 
 func house(p: Vector3, w: float, d: float, h: float, col: String, solid = true):
-	block(p - Vector3.UP * .45, Vector3(w + .35, h + .45, d + .3), col)
-	block(p + Vector3.UP * .08, Vector3(w + .46, .32, d + .44), "#ab9171")
-	block(p + Vector3.UP * (h - .12), Vector3(w + .65, .26, d + .55), "#bd9670")
-	put("roof", "#9e5f47", p + Vector3.UP * (h + .12), Vector3(w + .75, w * .25, d + .75))
-	var side = signf(center(-p.z) - p.x)
-	if is_zero_approx(side):
-		side = 1
-	block(p + Vector3(side * (w * .5 + .01), 0, .35), Vector3(.065, h * .69, 1.45), "#584f43")
-	for j in [-1, 1]:
-		block(
-			p + Vector3(side * (w * .5 + .035), h * .5, j * d * .32),
-			Vector3(.09, .82, .83),
-			"#686452"
-		)
+	var pool = ["cottage", "hearth", "inn", "kiln"] if zone < 3 else ["lodge", "tower", "hearth"]
+	var model = pool[rng.randi_range(0, pool.size() - 1)]
+	var turn = PI * .5 if p.x < center(-p.z) else -PI * .5
+	var bounds = scenery(model, p, h * 1.37, turn + rng.randf_range(-.16, .16))
 	if solid:
-		obstacles.append(Vector4(p.x, p.z, w * .5, d * .5))
+		obstacles.append(Vector4(p.x, p.z, bounds.z * .5, bounds.x * .5))
+
+
+func scenery(kind: String, p: Vector3, height: float, turn = 0.) -> Vector3:
+	var key = "atlas_" + kind
+	if not shapes.has(key):
+		var src = load("res://art/district/" + kind + ".gltf").instantiate()
+		var bits = src.find_children("*", "MeshInstance3D", true, false)
+		if src is MeshInstance3D:
+			bits.push_front(src)
+		assert(not bits.is_empty(), kind)
+		shapes[key] = bits[0].mesh
+		src.free()
+	var bb = shapes[key].get_aabb()
+	var factor = height / maxf(.001, bb.size.y)
+	put(
+		key,
+		"atlas",
+		p - Vector3.UP * bb.position.y * factor,
+		Vector3.ONE * factor,
+		Vector3(0, turn, 0)
+	)
+	return bb.size * factor
 
 
 func shop(p: Vector3, sgn: float):
@@ -341,7 +353,9 @@ func flush():
 			mm.set_instance_transform(i, batches[k][i])
 		var view = MultiMeshInstance3D.new()
 		view.multimesh = mm
-		if parts[0] == "sheet":
+		if parts[1] == "atlas":
+			pass  # the mesh already owns its shared, textured material
+		elif parts[0] == "sheet":
 			var cloth = ShaderMaterial.new()
 			cloth.shader = LINEN
 			cloth.set_shader_parameter("dye", Color(parts[1]))
@@ -356,7 +370,7 @@ func terrain():
 	var st = SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var base = Color(vistas[zone])
-	var sand = Color("d4bc92")
+	var sand = Color("b49c78")
 	for z in range(-int(length) - 95, 76, 5):
 		for x in range(-140, 140, 5):
 			for o in [
@@ -415,10 +429,11 @@ func setup(index: int, beats: Array, quality: bool):
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color("d7dfdc")
-	env.ambient_light_energy = .77
-	env.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
-	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	env.tonemap_exposure = 1.12
+	env.ambient_light_energy = .40
+	env.ambient_light_sky_contribution = 0.0
+	env.reflected_light_source = Environment.REFLECTION_SOURCE_DISABLED
+	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
+	env.tonemap_exposure = .95
 	env.fog_enabled = true
 	env.fog_light_color = sm.sky_horizon_color
 	env.fog_density = .00265
@@ -428,7 +443,8 @@ func setup(index: int, beats: Array, quality: bool):
 	add_child(we)
 	sun = DirectionalLight3D.new()
 	sun.light_color = Color("ffdfb3") if zone != 4 else Color("ffba87")
-	sun.light_energy = 1.58
+	sun.light_energy = .48
+	sun.light_specular = .32
 	sun.rotation_degrees = Vector3(-41 if zone != 4 else -19, -39, 0)
 	sun.shadow_enabled = high
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
@@ -444,24 +460,12 @@ func setup(index: int, beats: Array, quality: bool):
 		var rad = rng.randf_range(350, 476)
 		var pp = Vector3(cos(a) * rad, 0, -length * .5 + sin(a) * rad)
 		var hh = rng.randf_range(22, 50)
-		var col = ["#929b98", "#9a9c93", "#8c969b"][i % 3]
-		put(
-			"rock",
-			col,
-			pp + Vector3.UP * hh * .2,
-			Vector3(rng.randf_range(71, 133), hh * 1.65, rng.randf_range(65, 110)),
-			Vector3(rng.randf_range(-.13, .13), a, .15)
-		)
-		put(
-			"rock",
-			"#abb0a3",
-			pp * 1.27 + Vector3.UP * hh * .54,
-			Vector3(123, hh * 1.85, 123),
-			Vector3(.05, a, -.1)
-		)
+		if i % 3 != 1:
+			scenery("ridge" if i % 2 else "crag", pp - Vector3.UP * 8, hh * 1.43, a)
+
 	for t in range(-10, int(length) + 15, 11):
 		for signum in [-1, 1]:
-			var lane = signum * rng.randf_range(18, 30)
+			var lane = signum * rng.randf_range(15.3, 25)
 			var p = loc(t, lane)
 			if (zone in [0, 1, 2, 3, 4]) and rng.randf() < .5:
 				house(
@@ -477,7 +481,9 @@ func setup(index: int, beats: Array, quality: bool):
 				shop(loc(t + 4, signum * 15.6), signum)
 			for i in range(3):
 				var f = loc(t + rng.randf_range(-5, 5), signum * rng.randf_range(36, 105))
-				tree(f, rng.randf_range(4, 9), rng.randf() < .65)
+				scenery(
+					"elm" if i % 2 else "fir", f, rng.randf_range(4, 9), rng.randf_range(0, TAU)
+				)
 			for i in range(10):
 				var g = loc(t + rng.randf_range(-5, 6), signum * rng.randf_range(9, 54))
 				put(
@@ -660,6 +666,23 @@ func frame(delta: float, player: Vector3, walking_guide = false):
 
 
 func district_art():
+	if zone == 0:
+		scenery("inn", loc(4, -10.1), 7.5, PI * .54)
+		scenery("well", loc(128, 11.2), 3.1)
+		scenery("crop", loc(151, -11), 1.5, .25)
+	elif zone == 1:
+		for i in range(7):
+			scenery(
+				"market", loc(12 + i * 19, -11 if i % 2 else 11), 3.25, PI / 2 if i % 2 else -PI / 2
+			)
+	elif zone in [2, 3, 4, 5]:
+		scenery("academy", loc(95, -64), 29., .4)
+		scenery("tower", loc(77, -51), 15., -.7)
+		scenery("lodge", loc(66, 32), 11., -.75)
+	else:
+		scenery("tower", loc(66, -32), 13., PI / 2)
+		scenery("lodge", loc(144, 44), 12., -.67)
+
 	# Bespoke silhouettes anchor the teaching route; all ornament below shares draw batches.
 	match zone:
 		0:
@@ -744,7 +767,7 @@ func district_art():
 					var pt = p + Vector3(cos(a) * 4, .03, sin(a) * 4)
 					put("rock", "#9d805f", pt, Vector3(1.15, .12, .58), Vector3(0, -a, 0))
 		6:
-			for d in range(30, 201, 10):
+			for d in [37, 83, 140, 186]:
 				var p = loc(d, 0)
 				arch(p, 4.05, 2.7)
 				block(p + Vector3.UP * 7.92, Vector3(10.5, .55, 2.1), "#ada28c")
