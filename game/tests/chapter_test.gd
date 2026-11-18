@@ -56,7 +56,24 @@ func run():
 					var dest = g.terrain_target()
 					g.hero.position = dest + Vector3.BACK * .8
 					g.nearby_note = -1
-					g.interact()
+					if g.round_no >= 0 and g.beat.kind == "paired":
+						g.selected = int(g.current_stop().spell)
+						g.course_wave = .8
+						g.cooldown = 0
+						g.cast()
+					else:
+						g.interact()
+			"chart":
+				var board = g.ui.board
+				board.submit()
+				check(g.mode == "chart", "unsolved route cannot submit")
+				for k in board.route:
+					if k == board.route[0] or k == board.route[-1]:
+						continue
+					board.cursor = k
+					while board.turns[k] % 4 != 0:
+						board.turn_tile()
+				board.submit()
 			"dialog":
 				g.cmd("next")
 			"choice":

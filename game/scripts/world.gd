@@ -788,3 +788,52 @@ func district_art():
 			Vector3.ONE * rng.randf_range(.6, 1.45)
 		)
 		put("rod", "#785941", p + Vector3.UP * .12, Vector3(.8, .11, .8))
+
+
+func person_on_set(who: String, where: Vector3):
+	if not people.has(who):
+		var a = Actor.new()
+		add_child(a)
+		a.make(who)
+		people[who] = a
+		actors.append(a)
+	var actor = people[who]
+	actor.position = where
+	actor.show()
+	return actor
+
+
+func ensemble(pages: Array, at: Vector3, player: Vector3):
+	var voices = []
+	for line in pages:
+		var who = str(line[0])
+		if who == "İlyan" or (who == "Mina" and zone > 0) or (who == "Hedi" and zone > 0):
+			continue
+		if who not in PEOPLE and who not in ["Boyacı", "Çömlekçi", "Değirmenci", "Mektupçu"]:
+			continue
+		if voices.has(who):
+			continue
+		voices.append(who)
+		if (
+			people.has(who)
+			and people[who].visible
+			and people[who].position.distance_to(player) < 5.7
+		):
+			continue
+		var d = at - player
+		d.y = 0
+		d = d.normalized() if d.length_squared() > .02 else Vector3.FORWARD
+		var p = (
+			player
+			+ d * (2.6 + voices.size() * .22)
+			+ Vector3(d.z, 0, -d.x) * (1.35 if voices.size() % 2 else -1.65)
+		)
+		p.y = altitude(p.x, p.z)
+		var a = person_on_set(who, p)
+		a.face(player)
+		a.rotation.y = a.heading
+
+
+func object_at(kind: String, p: Vector3):
+	landmark(kind, p)
+	flush()

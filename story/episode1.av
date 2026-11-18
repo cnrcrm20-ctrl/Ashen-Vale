@@ -25,6 +25,8 @@ Mina|Bir yer adı gönder. Orada seni tanıyan biri yoksa ben buradan tanırım.
 :157,0|wall|vault|Bostan duvarını aş
 Hedi|Kamışını indir, kâtip. Sen defterine yazdın diye bu çocuk yola çıkmış olmaz.
 İlyan|Arkama bakarsam duracağım. Önümde bu duvar var; ötesinde bugün nereye gideceğime ben karar verebilirim.
+:162,0|chest|escape|Kâtibin sayımından önce bostan geçitlerini bul
+Mina|Kâtibin saydığı biz değiliz; beş hasat boyunca kaç el çalışacak, onu sayıyor. Çeşmeye kadar kendin çık. Çivitli bezi görürsen doğru yerdesin.
 :192,3|gate|exit|Boyacıların sokağına in
 İlyan|Sağ yanağım taze çivit. Geri dönsem Hedi yüzümden hangi yolu tuttuğumu anlayacak. Pazardan her zamanki gibi geç. Kimse birinin kaçtığını adımlarından bilmez.
 @Üçoluk Pazarı|Birinci gün · Islak topuk izleri
@@ -74,6 +76,8 @@ Tamar|Ortak Avlu bir şehir kapısının içi değil. Hamamları, bostanları, i
 Çömlekçi|Bunun içine inmek için basamak lazım evlat. Kulpundan kaldırırım dersen kulbu elinde kalır. Bak, içerideki çocuk fırından önce duvar kalınlığını ölçüyor.
 İlyan|Annem de bunları mı bilirdi? Balığın boynu fırında niye kırıldı diye gözümü kapatınca ilk defa soracak biri geliyor aklıma.
 Çömlekçi|İki parçayı da sakla. Öğrenirsin. Önce ikisini de yapan elleri hatırlamak lazım.
+:109,-4|Tamar|witness|Ortak Avlu'da mektubun yolunu sor
+Tamar|Eşiği görmek her şeyi öğrenmek değil. Sana burayı üç kişinin gözünden göstereyim. Beni değil, birbirlerini nasıl düzelttiklerini dinle. Dönüşte sağ çizmenin dili olacak.
 :151,-9|well|look|Nar hattıyla Ufuk Duvarları'nı ayırt et
 İlyan|Buraya güvendeyiz dediler. Ötedeki yol da aynı taşla döşeli. Hangisini aklımda tutacağım?
 ?1|Güvenli bölgenin sınırı hangisi?|Gri Ufuk Duvarları~Onlar bütün vadinin sınırı; kendi yolculuğun henüz oraya varmadı.|Nar ağaçları ve ant taşları~Tamar: Evet. Başkasının toprağına bir ayakla geçmek bile yeter. Yolu yazmadan öteye acele etme.|Su kemerinin sütunları~Kemer okulun su yolu. Gel onu yakından gör, sınır ondan farklı.
@@ -82,6 +86,8 @@ Mektupçu|Yer adı buraya. Mektubu yazarken yırtarsan bir tane daha veririm. Am
 İlyan|Yerimin adı Ortak Avlu. Burada küplerin içine insan giriyor. Baş kısmını sakla. İlyan. Bu kadar kısa olursa orada olduğuma inanır mı?
 Tamar|Sen yazmışsan inanır. Üçoluk nöbetim yarın. Mektubunu bir başkasının torbasına koymayacağım.
 ?-1|Mektubun dışına hangi izi bırakırsın?|Balığın kuyruğu~Mina başını yaptığı balığı gözünü kapatsa tanır.|Üçüncü zeytin~Söz verdiğin sabahı avucunda taşıyacak.|Çivitli parmak~Yanağındaki boya mürekkebe karışıp küçük bir yol çizdi.
+:216,5|desk|chart0|Mektubun yolunu balmumuna çiz
+Mektupçu|Şu iki küçük çentiği yerinden oynatma: Ortak Avlu'dan çıkış ve astara teslim. Kendi elinle ulaştırmadığın mektubun kime emanet gittiğini bil. Balmumu ters dönerse yolu tekrar açarsın; kâğıdı ziyan etmezsin.
 :242,-4|Tamar|talk|Ölçü Evi'ne giden yolu bul
 Tamar|Belis çömlekçiydi diye seni fırına bırakmıyorum. Vadigon büyücüydü diye de ustalara teslim etmiyorum. Bu okulun huyu başkadır: Kimden geldiğine değil, neyi gerçekten gördüğüne bakar.
 İlyan|Olmazsa yalağı gösterecek misin? Bir evden kaçıp başka bir eve kilitlenmeyeceğim.
@@ -96,6 +102,8 @@ Oris|Sarn, Ovaş, Meret. Üç sütunum var. Yukarı için hangi sütunu işaretl
 Ruva|Altı boş. Oraya yazarsın. Kimin evladı diye sorabilirsin; cevap verene kadar kapıda tutamazsın.
 İlyan|Annem Belis. Çömlekçi. Öbür ismi bugün bende bırakın.
 ?-1|Kil levhaya ne eklensin?|Üçoluklu İlyan~Oris: Doğduğun yer sen yazınca herhangi bir krallıktan daha küçük görünmüyor.|Belis'in oğlu İlyan~Oris: Annenin mesleğini de yanına sığdırdım. Sana söylediklerinde okuyabilirsin.
+:59,3|Oris|register|Konuk hanesini Oris ve Ekin'le hazırla
+Oris|Ben mührü bulana kadar hazır satır arayıp durma. Üç sütuna da uymuyorsan boş bir kil ve iki göz yeter. Ekin, ona dördüncü bir kral seçme lütfen.
 :91,-9|bed|search|Yatakhanede kendine bir yer aç
 +Altıncı yatak|Taş kemerin içine altı numaranın yatağı girmiş. Tahta soğuk, üstündeki yün sıcak.
 +Çarık tahtası|Kireçdam'da yeni gelenden çarığı kapıda alırlardı. Burada uyanınca ayağını nereye koyacağın belli.
@@ -105,6 +113,8 @@ Ekin|Daha gelmeden ayakkabını eline almışsın. Burada onları uyurken satmı
 Ekin|Haritanın köşesini tutar mısın? İncir lapası pahalı yapıştırıcıdan kötü değilmiş. Sadece karıncalara yol ücreti sormayı unutmuşum.
 İlyan|İğdeye benzeyen küçük işaret senin evin mi? Biz evleri haritaya yazmayız. Kireçdam desem herkes gösterir.
 Ekin|İğdegediği. Ablam Deren orada. Bir gün buradan köye kadar yolu kendim ölçersem haritacı olmama kimse ses çıkaramaz. O vakte kadar köşeyi tutacak birine ihtiyacım var.
+:141,4|desk|chart1|Künkleri kesit çiziminde birleştir
+Ekin|Karıncalar incirli köşeyi yedi. Su nereden giriyor biliyorum ama şu iki ölçü kabını görmeden çıkarırsam ondan sonraki okuyucu hangi kesite baktığımı anlayamaz. Bana tek bir sürekli hat çiz; suyun yönünü kâğıtla değiştirmiyoruz.
 :162,-6|chest|look|Balığın kuyruğunu yatağının yanına bırak
 İlyan|Kuyruğun bir yanı perdahlı, öteki yanı Mina'nın elinin altında pürüzlü kalmış. Evrende ne kadar uzakta olursak olalım balığın eksik yarısı aynı.
 Ekin|Onu sandığın üstüne koy. Kaybolursa kimin eşyasını aradığımızı biliyor oluruz. Akşam dersinde dönünce yine burada bulursun.
@@ -162,6 +172,8 @@ Ekin|Uçurmak kolay, sepette bırakmak zor. Ben duvardan geri gelen diski enseme
 Ruva|Her atıştan sonra nereye düştüğüne bak. Bir sonraki için önce yönü, sonra gücü değiştir. Boşa giden denemede kimsenin canı yanmıyor.
 :196,7|basket|gust|Öbür sepete farklı bir yay çiz
 İlyan|Yakındaki sepete verdiğim güç ötekine az geliyor. Ekin, çizgiyi tut. Islak kâseye değil sazın dibine düşürmek istiyorum.
+:200,1|Ruva|paired|Dört ölçülük eşli açık alan talimini bitir
+Ruva|Levhayı bırak. Bu kez ayaklarınla yer seçip elinle dal seçeceksin. Ekin kaydederken dört ayrı noktaya yürü. Kandili, künkü, diski ve sepeti birbirinden ayırmadan büyünün adı sana yardım etmez.
 :225,-6|Ekin|talk|Deren'in mektubunu haritayla eşleştir
 Ekin|Deren yazdı. Kuyu başındaki sıra üç haftadır uzuyormuş. Haritada hâlâ İğdegediği'ne bol su var. Hangisi yanlış? Bana inan demiyorum. Benimle ölçmeye gelir misin?
 İlyan|Suyun yönünü ancak yürürken anlayabiliyorum. Duruyorsa bilmiyoruz diye yazmalıyız. Bunu sana özel bir iyilik diye değil doğru kayıt diye söyleyeceğim.
@@ -197,6 +209,8 @@ Ekin|Biri bizim suyumuzu çalıyor diye yazmak istedim. Deren sıra uzuyor dedi 
 Tamar|Hedi nerede olduğunu biliyor. Gitmişsin gibi mühür basmadı. Bunu Mina verdi. O okusun, sen bakma, dedi bana. Astarını açmak ister misin?
 Mina|Yer adını aldım. Balığın başı bende. Zeytini yedim. Çekirdeğini istersen saklarım.
 İlyan|Yağ izi bir gün yazıyı silecek. Bugün hâlâ mektubun kokması daha iyi. Yer adını gönderdim. Beni nerede soracağını biliyor artık.
+:260,5|desk|chart2|Haritada bildiğin yolu çiz, ötesini boş bırak
+Ekin|Üçdil'e kadar gördük. Sonra nereye gidiyor diye sorsalar yolun adını biliyoruz, kıvrımlarını bilmiyoruz. Çentikleri birleştir; son mühür nar hattında dursun. Boş yer hata değil.
 :273,0|Ekin|end|Yarınki seferi birlikte çiz
 Ruva|İki kaydı götürün. Önce çeşmeyi kullananlara sorun. Sonra mührü basan kapıya gidersiniz. Gözetmen hanesine Tamar yazıldı.
 Ekin|Devamı nerede? Şu nar ağaçlarının ötesinde harita boş kaldı. Kalemi alacak mısın?

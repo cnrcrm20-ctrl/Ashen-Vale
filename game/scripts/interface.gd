@@ -2,6 +2,9 @@ extends Control
 signal command(key: String)
 signal option(index: int)
 signal ritual_effect(id: String, ok: bool)
+signal board_sound(key: String)
+var board
+var board_hint: Label
 signal ritual_done
 const ART = preload("res://art/first_light.jpg")
 const SERIF = preload("res://fonts/display.ttf")
@@ -152,6 +155,7 @@ func wipe():
 		page.queue_free()
 	page = null
 	ritual = null
+	board = null
 	scroll = null
 	choices.clear()
 
@@ -458,6 +462,8 @@ func exercise(mode: String, serial: int):
 
 
 func _process(_dt):
+	if is_instance_valid(board):
+		board_hint.text = board.hint + ("    ✕ Döndür · △ Dene" if pad else "")
 	if is_instance_valid(ritual):
 		rit_hint.text = ritual.hint
 		rit_button.text = ritual.caption() + "    ·    %d/%d" % [ritual.success, ritual.rounds]
@@ -476,3 +482,27 @@ func accept():
 		f.pressed.emit()
 	elif choices.size():
 		choices[0].pressed.emit()
+
+
+func chart(which: int):
+	var box = sheet(
+		["Mektubun yolu", "Künklerin kesiti", "Görünce çizeriz"][which],
+		"BALMUMU LEVHA    /    YOL ÇİZİMİ"
+	)
+	board = preload("res://scripts/route_board.gd").new()
+	box.add_child(board)
+	rect(board, .05, .31, .95, .75)
+	board.setup(which)
+	board.cue.connect(func(key): board_sound.emit(key))
+	board.solved.connect(func(): command.emit("chart_solved"))
+	var l = label(box, "I  " + board.names[1] + "     ◇     II  " + board.names[2], 17, GOLD)
+	rect(l, .07, .24, .94, .31)
+	board_hint = label(box, board.hint, 16, MUTED)
+	board_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	rect(board_hint, .07, .75, .93, .835)
+	var b = button(box, "‹  Masadan kalk", bindcmd("leave_ritual"))
+	rect(b, .06, .85, .30, .955)
+	b = button(box, "Döndür  ↻", func(): board.turn_tile())
+	rect(b, .335, .85, .62, .955)
+	b = button(box, "Yolu dene  ›", func(): board.submit(), true)
+	rect(b, .655, .85, .94, .955)

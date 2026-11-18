@@ -102,6 +102,12 @@ var data: Dictionary
 var archive: Dictionary
 var beats: Array
 var zones: Array
+var trips: Dictionary
+var round_no = -1
+var lookout
+var watch_ring
+var practice_disc
+var course_wave = 0.
 var world
 var hero
 var ui
@@ -186,6 +192,7 @@ func read_json(path: String):
 func _ready():
 	data = read_json("res://data/chapter.json")
 	archive = read_json("res://data/archive.json")
+	trips = read_json("res://data/excursions.json")
 	beats = data.beats
 	zones = data.zones
 	var config = ConfigFile.new()
@@ -205,6 +212,8 @@ func _ready():
 	ui.option.connect(choose)
 	ui.ritual_effect.connect(ritual_fx)
 	ui.ritual_done.connect(pass_ritual)
+	ui.board_sound.connect(func(id): audio.fx(id))
+	get_viewport().size_changed.connect(fit_safe)
 	ui.prepare_hud()
 	camera = Camera3D.new()
 	camera.fov = 62
@@ -347,6 +356,12 @@ func build_zone(z: int):
 		if int(b.zone) == zone:
 			local.append(b)
 	world.setup(zone, local, options.high)
+	for trip in trips.values():
+		if int(trip.zone) == zone:
+			for row in trip.stops:
+				if row.model not in World.PEOPLE:
+					world.landmark(row.model, world.point(row.at))
+	world.flush()
 	hero = Actor.new()
 	world.add_child(hero)
 	hero.make("İlyan")
@@ -380,6 +395,15 @@ func token(p: Vector3, color: String, scale_: float) -> MeshInstance3D:
 
 
 func enter(i: int, restore = false):
+	round_no = -1
+	if is_instance_valid(lookout):
+		lookout.hide()
+	lookout = null
+	if is_instance_valid(watch_ring):
+		watch_ring.queue_free()
+	if is_instance_valid(practice_disc):
+		practice_disc.queue_free()
+	practice_disc = null
 	index = i
 	beat = beats[index]
 	var different = int(beat.zone) != zone
@@ -395,6 +419,10 @@ func enter(i: int, restore = false):
 	trail = false
 	vaulting = false
 	world.stage(beat)
+	if is_instance_valid(hero.mark):
+		hero.mark.visible = zone >= 2 or beat.model == "mark" or flags.has("revealed")
+	if beat.model == "mark":
+		flags["revealed"] = true
 	if beat.kind == "search":
 		for j in range(3):
 			var p = world.loc(
@@ -415,6 +443,8 @@ func enter(i: int, restore = false):
 	else:
 		explore()
 	ui.set_goal("%02d  /  %s" % [zone + 1, zones[zone].name], beat.title)
+	if restore and trips.has(beat.kind) and flags.has(stop_key()):
+		set_round(int(flags[stop_key()]))
 	last_goal_key = ""
 	clear_input()
 
@@ -473,6 +503,7 @@ func narrate(t: String):
 
 
 func conversation(pages: Array, continuation: String, at: Vector3):
+	world.ensemble(pages, at, hero.position)
 	lines = pages.duplicate(true)
 	after = continuation
 	line_no = 0
@@ -501,6 +532,8 @@ func next_line():
 		show_line()
 		return
 	match after:
+		"round":
+			set_round(round_no + 1)
 		"stage":
 			if beat.has("ask"):
 				ask_user_game(beat.ask, "authored")
@@ -553,7 +586,13 @@ func choose(n: int):
 
 func stage_action():
 	var k = str(beat.kind)
-	if k in ["wick", "water", "dodge", "guard", "gust"]:
+	if trips.has(k):
+		set_round(0)
+	elif k.begins_with("chart"):
+		mode = "chart"
+		clear_input()
+		ui.chart(int(k.right(1)))
+	elif k in ["wick", "water", "dodge", "guard", "gust"]:
 		ritual_mode = k
 		open_ritual()
 	elif k.begins_with("test"):
@@ -683,6 +722,8 @@ func burst(at: Vector3, key: String, ok = true):
 
 func terrain_target() -> Vector3:
 	nearby_clue = -1
+	if round_no >= 0:
+		return world.point(current_stop().at)
 	if trail:
 		return world.people["Tamar"].position
 	if beat.kind == "search" and mask != 7:
@@ -720,6 +761,9 @@ func interact():
 	if ds > 4.45:
 		message("İşaretli yere yaklaş.")
 		return
+	if round_no >= 0:
+		round_interact()
+		return
 	if beat.kind == "search" and mask != 7 and nearby_clue >= 0:
 		var i = nearby_clue
 		mask |= 1 << i
@@ -735,6 +779,8 @@ func interact():
 
 func cast():
 	if mode != "explore" or learned.is_empty() or cooldown > 0:
+		return
+	if field_cast():
 		return
 	if str(beat.kind).begins_with("test") and hero.position.distance_to(terrain_target()) < 4.5:
 		interact()
@@ -809,6 +855,7 @@ func _physics_process(dt):
 				advance()
 		else:
 			walk(delta)
+		field_frame(delta)
 		if trail:
 			var guide = world.people["Tamar"]
 			var old = guide.position
@@ -844,6 +891,8 @@ func _physics_process(dt):
 			else Vector2(get_viewport().get_visible_rect().size.x * .5, 10000)
 		)
 		var act = "Konuş" if beat.model in World.PEOPLE else "İncele"
+		if round_no >= 0:
+			act = "Ölçü ipucu" if int(current_stop().spell) >= 0 else "İncele"
 		if beat.kind == "vault":
 			act = "Duvarı aş"
 		if nearby_note >= 0 and distance > 4.25:
@@ -1104,6 +1153,9 @@ func cmd(key: String):
 				"BÖLÜM SONU",
 				[["YOL DEFTERİ", "journal"], ["ANA MENÜ", "title"]]
 			)
+		"chart_solved":
+			if mode == "chart":
+				advance()
 		"leave_ritual":
 			explore()
 			message("Dersi aynı yerde yeniden deneyebilirsin.")
@@ -1232,7 +1284,7 @@ func back():
 			next_line()
 		"choice":
 			message("Bir yanıt seç.")
-		"ritual":
+		"ritual", "chart":
 			cmd("leave_ritual")
 		"settings":
 			cmd("settings_back")
@@ -1274,6 +1326,22 @@ func _input(event):
 					cycle_spell(-1)
 				JOY_BUTTON_RIGHT_SHOULDER:
 					cycle_spell()
+		elif mode == "chart":
+			match event.button_index:
+				JOY_BUTTON_A:
+					ui.board.turn_tile()
+				JOY_BUTTON_Y:
+					ui.board.submit()
+				JOY_BUTTON_B:
+					back()
+				JOY_BUTTON_DPAD_LEFT:
+					ui.board.step(-1, 0)
+				JOY_BUTTON_DPAD_RIGHT:
+					ui.board.step(1, 0)
+				JOY_BUTTON_DPAD_UP:
+					ui.board.step(0, -1)
+				JOY_BUTTON_DPAD_DOWN:
+					ui.board.step(0, 1)
 		elif mode == "ritual":
 			match event.button_index:
 				JOY_BUTTON_DPAD_LEFT:
@@ -1314,7 +1382,22 @@ func _input(event):
 			back()
 			get_viewport().set_input_as_handled()
 			return
-		if mode == "ritual":
+		if mode == "chart" and event.pressed:
+			match event.keycode:
+				KEY_LEFT:
+					ui.board.step(-1, 0)
+				KEY_RIGHT:
+					ui.board.step(1, 0)
+				KEY_UP:
+					ui.board.step(0, -1)
+				KEY_DOWN:
+					ui.board.step(0, 1)
+				KEY_SPACE:
+					ui.board.turn_tile()
+				KEY_ENTER:
+					ui.board.submit()
+			get_viewport().set_input_as_handled()
+		elif mode == "ritual":
 			if event.keycode in [KEY_SPACE, KEY_ENTER]:
 				if event.pressed:
 					ui.ritual.press()
@@ -1382,3 +1465,128 @@ func _unhandled_input(event):
 	elif event is InputEventMouseMotion and mouse_look:
 		yaw -= event.relative.x * .005
 		pitch = clampf(pitch - event.relative.y * .0035, .015, .86)
+
+
+func stop_key() -> String:
+	return "round_" + str(index)
+
+
+func current_stop() -> Dictionary:
+	return trips[beat.kind].stops[round_no]
+
+
+func set_round(n: int):
+	round_no = n
+	flags[stop_key()] = n
+	if n >= trips[beat.kind].stops.size():
+		advance()
+		return
+	var row = current_stop()
+	var at = world.point(row.at)
+	if row.model in World.PEOPLE:
+		world.person_on_set(row.model, at)
+	if beat.kind == "escape" and not is_instance_valid(lookout):
+		lookout = world.person_on_set("Kâtip", world.loc(172, 0))
+		watch_ring = MeshInstance3D.new()
+		var m = TorusMesh.new()
+		m.inner_radius = 3.2
+		m.outer_radius = 3.36
+		m.rings = 36
+		m.ring_segments = 5
+		watch_ring.mesh = m
+		watch_ring.material_override = world.material("#be7950")
+		lookout.add_child(watch_ring)
+		watch_ring.position.y = .08
+	if beat.kind == "paired" and int(row.spell) == 2:
+		practice_disc = MeshInstance3D.new()
+		practice_disc.mesh = world.geometry("rod")
+		practice_disc.material_override = world.material("#edc795", true)
+		practice_disc.scale = Vector3(.58, .16, .58)
+		world.add_child(practice_disc)
+		course_wave = 0.
+	ui.set_goal(
+		zones[zone].name + "  ·  %d / %d" % [n + 1, trips[beat.kind].stops.size()], row.task
+	)
+	explore()
+	checkpoint()
+
+
+func round_interact():
+	var row = current_stop()
+	var need = int(row.spell)
+	if need >= 0:
+		message("L1/R1 veya ↻ ile seç; R2 veya büyü düğmesi ile uygula: " + SPELLS[need])
+		return
+	seal_round(row)
+
+
+func seal_round(row: Dictionary):
+	audio.fx("seal", .7)
+	hero.gesture("Interact", .65)
+	if is_instance_valid(practice_disc):
+		practice_disc.queue_free()
+		practice_disc = null
+	conversation(row.lines, "round", world.point(row.at))
+
+
+func field_cast() -> bool:
+	if round_no < 0 or beat.kind != "paired":
+		return false
+	var row = current_stop()
+	var p = world.point(row.at)
+	var gap = hero.position.distance_to(p)
+	if gap > 5.5:
+		message("Ölçü noktasına yaklaş.")
+		return true
+	if selected != int(row.spell):
+		audio.fx("miss", .5)
+		message("Sicildeki sınırını hatırla. Bu dal şu işi yapamaz: " + row.task)
+		return true
+	if selected == 2 and course_wave < .62:
+		audio.fx("miss", .65)
+		message("Diski gözet. Kavis uzaktan değil, sana yaklaştığında dayanır.")
+		return true
+	var aim = Vector3(p.x - hero.position.x, 0, p.z - hero.position.z)
+	if (
+		selected == 3
+		and aim.length() > 1.5
+		and aim.normalized().dot(Vector3(sin(hero.heading), 0, cos(hero.heading))) < .52
+	):
+		message("Sepete dön. İtiş bedeninin baktığı yöne gider.")
+		return true
+	var key = ["ember", "water", "shield", "wind"][selected]
+	var at = p + Vector3.UP * .95
+	burst(at, key)
+	audio.fx(key)
+	seal_round(row)
+	hero.gesture("Block" if selected == 2 else "Spellcast_Shoot", .7)
+	return true
+
+
+func field_frame(dt: float):
+	if round_no < 0:
+		return
+	if beat.kind == "paired" and is_instance_valid(practice_disc):
+		var pos = world.point(current_stop().at) + Vector3.UP
+		course_wave = fmod(course_wave + dt * .40, 1.)
+		practice_disc.position = (
+			pos.lerp(hero.position + Vector3.UP, course_wave)
+			+ Vector3.UP * sin(course_wave * PI) * .7
+		)
+		practice_disc.rotation.y += dt * 5
+	if beat.kind == "escape" and is_instance_valid(lookout):
+		var p = world.loc(174 + sin(clock * .35) * 5., sin(clock * .48) * 10.)
+		var diff = p - lookout.position
+		lookout.position = p
+		lookout.motion(diff.length() / dt, diff.normalized(), dt)
+		if hero.position.distance_to(p) < 3.25 and velocity.length() > 3.15:
+			var stop = (
+				world.point(trips.escape.stops[round_no - 1].at)
+				if round_no > 0
+				else world.point(beat.at)
+			)
+			hero.position = stop
+			velocity = Vector3.ZERO
+			run = false
+			audio.fx("miss", .64)
+			message("Çakıl ses verdi. Son gölgedesin; yürüyerek geç ya da çemberin dışından dolaş.")
