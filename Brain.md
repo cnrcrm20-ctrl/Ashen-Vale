@@ -25,3 +25,8 @@ Yeni bir oturumda önce bu dosyayı oku. Amaç, oyunla ilgili kararları korumak
 - İlk gün kaçış, eşik, konuk kaydı, kandil ve yemek; ikinci gün ders ve eşli talim; üçüncü gün Üçdil. Sonuç: ölçü ile teslim kaydı çelişir; fail ya da sabotaj kanıtlanmaz. İki kayıt ve Mina’nın cevabıyla sefer hazırlanır. Nar hattının ötesine geçilmez.
 - 60 görev adımı, dört çok duraklı saha çalışması, üç döndürülebilir güzergâh levhası, 21 isteğe bağlı hatıra. Süreyi doldurmak için diyalog kilidi veya geri sayım yok. Tasarım 45–50 dakika; hızlandırılmış rota + 180 kelime/dakika okuma modeli 32,1 dakika, düşünme/uygulama ayrı. Bu, ölçülmüş insan oynanış süresi ya da telefon FPS testi **değildir**.
 - İmzalı ilk sürüm için teslim tarifi `delivery/episode1.json`; yayın durumu GitHub Releases’tan doğrulanır. Yeni bir teslim için yeni ve ayrı onay gerekir.
+
+### 1.0.0 teslim doğrulaması
+
+- [Yayımlanan APK](https://github.com/cnrcrm20-ctrl/Ashen-Vale/releases/download/bolum-1-v1.0.0/Ashen-Vale-Episode-1.apk) 73.154.317 bayt; SHA-256 `ab6cc8595de63ec80aba30121d27ef096b8eb948c945fe877969b07c7de0281e`. [İmzalı teslim](https://github.com/cnrcrm20-ctrl/Ashen-Vale/actions/runs/44420376904) dosyayı public URL’den geri indirerek doğruladı. Kaynak `3e430f4`, `main` birleştirilmedi.
+- [Aynı APK'nın Android görüntü testi](https://github.com/cnrcrm20-ctrl/Ashen-Vale/actions/runs/44420855441): Android 12/API 31, x86_64, Mesa GLES; başlık, avlu, diyalog ve devam kareleri ayrı ayrı görüntülendi; dokunmatik giriş ve süreç kapatıldıktan sonra kayıt doğrulandı. Emülatörün **SwiftShader** sürücüsünde shader uniform sınırı yüzünden siyah görüntü görülmüştü. İkinci test dosyayı değiştirmedi. Bu fiziksel ARM telefon, FPS veya gerçek Bluetooth kol testi değildir.
