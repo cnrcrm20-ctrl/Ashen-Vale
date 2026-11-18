@@ -19,6 +19,9 @@ var sun: DirectionalLight3D
 var way: Node3D
 var ring: MeshInstance3D
 var target_pos = Vector3.ZERO
+var wheels = []
+var twigs = []
+var reversed = false
 var water_mat: ShaderMaterial
 var cloth_mat: ShaderMaterial
 var clock = 0.0
@@ -428,7 +431,7 @@ func setup(index: int, beats: Array, quality: bool):
 	sky.sky_material = panorama
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color("d7dfdc")
+	env.ambient_light_color = Color("c6d7e0")
 	env.ambient_light_energy = .40
 	env.ambient_light_sky_contribution = 0.0
 	env.reflected_light_source = Environment.REFLECTION_SOURCE_DISABLED
@@ -589,7 +592,19 @@ func basin(p: Vector3, w = 1.0):
 
 func landmark(kind: String, p: Vector3):
 	match kind:
-		"bowl", "lamp":
+		"bowl":
+			props("table_medium_tablecloth", p, .73)
+			put("pot", "#ab7854", p + Vector3.UP * .73, Vector3(.6, .15, .6))
+			for j in range(3):
+				put(
+					"leaf",
+					"#575631" if j < 2 else "#443935",
+					p + Vector3((j - 1) * .13, .89, .13 if j == 1 else 0.),
+					Vector3(.14, .09, .11)
+				)
+			props("chair", p + Vector3(-1.22, 0, 0), .8, PI / 2)
+			props("chair", p + Vector3(.9, 0, -1.2), .75, -.7)
+		"lamp":
 			props("table_medium_tablecloth", p, .63)
 			put("pot", "#b27b53", p + Vector3.UP * .65, Vector3(.51, .35, .51))
 			props("candle_triple", p + Vector3(.38, .64, .1), .53)
@@ -628,7 +643,9 @@ func landmark(kind: String, p: Vector3):
 			props("shelf_small_candles", p + Vector3(1.8, 0, -1), .8)
 		"chest":
 			props("chest", p, .95)
-		"pipe", "wheel":
+		"wheel":
+			mill(p)
+		"pipe":
 			basin(p, 1.35)
 			arch(p + Vector3(0, 0, -.85), 1.18, 1.35, false, "#b29d7d")
 			put(
@@ -655,6 +672,14 @@ func stage(b: Dictionary):
 
 func frame(delta: float, player: Vector3, walking_guide = false):
 	clock += delta
+	if reversed:
+		for w in wheels:
+			w.rotation.z -= delta * .85
+		for t in twigs:
+			t[0].show()
+			t[0].position = (
+				t[1] + Vector3(.62 + sin(clock * 1.5) * .13, .26, fposmod(clock * .65, 6.) - 3.)
+			)
 	if ring:
 		ring.scale = Vector3.ONE * (1.0 + sin(clock * 2) * .045)
 	for actor in actors:
@@ -667,6 +692,32 @@ func frame(delta: float, player: Vector3, walking_guide = false):
 
 func district_art():
 	if zone == 0:
+		var center_ = loc(11, -3)
+		# The orphanage's shaded open-sided dining gallery, opening onto the courtyard.
+		put(
+			"sheet",
+			"#677b74",
+			center_ + Vector3.UP * 4.36,
+			Vector3(13.0, 1, 11),
+			Vector3(.04, 0, -.07)
+		)
+		for x in [-6.05, 6.05]:
+			for z in [-5.1, 5.1]:
+				var p = center_ + Vector3(x, 0, z)
+				beam(p, p + Vector3.UP * 4.66, .26, "#725442")
+				block(p, Vector3(.55, .49, .55), "#988469")
+		for z in [-5.1, 5.1]:
+			beam(center_ + Vector3(-6.25, 4.4, z), center_ + Vector3(6.25, 4.36, z), .32, "#725442")
+		props("shelf_large", center_ + Vector3(-4.9, 0, -1), 1.13, PI / 2)
+		props("crates_stacked", center_ + Vector3(-4.7, 0, 2), .95)
+		# Small aprons and handwoven runner connect the dining setting to the later school.
+		for z in range(4):
+			put(
+				"box",
+				"#776050" if z % 2 else "#527373",
+				loc(8 + z * 1.04, 2) + Vector3.UP * .035,
+				Vector3(3, .035, 1.03)
+			)
 		scenery("inn", loc(4, -10.1), 7.5, PI * .54)
 		scenery("well", loc(128, 11.2), 3.1)
 		scenery("crop", loc(151, -11), 1.5, .25)
@@ -837,3 +888,66 @@ func ensemble(pages: Array, at: Vector3, player: Vector3):
 func object_at(kind: String, p: Vector3):
 	landmark(kind, p)
 	flush()
+
+
+func window_water(p: Vector3) -> MeshInstance3D:
+	var n = MeshInstance3D.new()
+	var q = QuadMesh.new()
+	q.size = Vector2(3.25, 4.6)
+	n.mesh = q
+	n.position = p + Vector3(0, 2.35, -1.5)
+	var mat = ShaderMaterial.new()
+	mat.shader = preload("res://shaders/threshold.gdshader")
+	n.material_override = mat
+	add_child(n)
+	return n
+
+
+func mill(p: Vector3):
+	var crank = Node3D.new()
+	crank.position = p + Vector3(0, 1.3, -.4)
+	add_child(crank)
+	wheels.append(crank)
+	var r = MeshInstance3D.new()
+	var t = TorusMesh.new()
+	t.inner_radius = 1.12
+	t.outer_radius = 1.23
+	t.rings = 40
+	t.ring_segments = 6
+	r.mesh = t
+	r.material_override = material("#805a3c")
+	r.rotation.x = PI / 2
+	crank.add_child(r)
+	for i in range(8):
+		var a = i * TAU / 8.
+		var bar = MeshInstance3D.new()
+		bar.mesh = geometry("box")
+		bar.scale = Vector3(.09, 1.12, .13)
+		bar.rotation.z = -a
+		bar.position = Vector3(sin(a), cos(a), 0) * .55
+		bar.material_override = material("#b79158")
+		crank.add_child(bar)
+		var vane = MeshInstance3D.new()
+		vane.mesh = geometry("box")
+		vane.scale = Vector3(.39, .2, .45)
+		vane.position = bar.position * 2.09
+		vane.rotation.z = -a
+		vane.material_override = material("#986a49")
+		crank.add_child(vane)
+	var trough = MeshInstance3D.new()
+	var q = PlaneMesh.new()
+	q.size = Vector2(2.6, 8.6)
+	trough.mesh = q
+	trough.material_override = water_mat
+	trough.position = p + Vector3.UP * .18
+	add_child(trough)
+	for x in [-1.44, 1.44]:
+		block(p + Vector3(x, 0, 0), Vector3(.30, .44, 8.7), "#aeaa90")
+	var twig = MeshInstance3D.new()
+	twig.mesh = geometry("rod")
+	twig.material_override = material("#725039")
+	twig.scale = Vector3(.10, .62, .1)
+	twig.rotation.z = 1.36
+	add_child(twig)
+	twigs.append([twig, p])
+	twig.hide()

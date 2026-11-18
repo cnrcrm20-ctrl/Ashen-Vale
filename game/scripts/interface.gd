@@ -22,6 +22,7 @@ var place: Label
 var distance_label: Label
 var prompt: Button
 var movehint: Label
+var cycle_button: Button
 var cast_button: Button
 var marker: Label
 var joy: Control
@@ -197,8 +198,12 @@ func title(saved: bool, completed: bool):
 	rect(p, .07, .423, .78, .49)
 	var b = button(
 		page,
-		"YOLCULUĞA DEVAM   ›" if saved and not completed else "YOLCULUĞA BAŞLA   ›",
-		bindcmd("continue" if saved and not completed else ("confirm_new" if completed else "new")),
+		(
+			"BÖLÜM DEFTERİ   ›"
+			if completed
+			else ("YOLCULUĞA DEVAM   ›" if saved else "YOLCULUĞA BAŞLA   ›")
+		),
+		bindcmd("continue" if saved else "new"),
 		true
 	)
 	rect(b, .07, .57, .07, .57, 0, 0, 325, 61)
@@ -210,7 +215,7 @@ func title(saved: bool, completed: bool):
 	opt = button(page, "OYUN HAKKINDA", bindcmd("credits"))
 	rect(opt, .07, .57, .07, .57, 167, 74, 357, 125)
 	choices.append(opt)
-	if saved and not completed:
+	if saved:
 		opt = button(page, "YENİ KAYIT", bindcmd("confirm_new"))
 		rect(opt, .07, .57, .07, .57, 0, 139, 155, 185)
 		choices.append(opt)
@@ -240,6 +245,9 @@ func prepare_hud():
 	marker.size = Vector2(42, 42)
 	marker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	distance_label = label(hud, "", 17, CREAM)
+	for n in [marker, distance_label]:
+		n.add_theme_constant_override("outline_size", 3)
+		n.add_theme_color_override("font_outline_color", Color("393c35"))
 	distance_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	distance_label.size = Vector2(100, 33)
 	dial = layer(hud)
@@ -258,11 +266,14 @@ func prepare_hud():
 	rect(cast_button, 1, 1, 1, 1, -230, -179, -106, -125)
 	cast_button.focus_mode = FOCUS_NONE
 	btn = button(dial, "↻", bindcmd("cycle"))
+	cycle_button = btn
 	rect(btn, 1, 1, 1, 1, -97, -179, -30, -125)
 	btn.focus_mode = FOCUS_NONE
 	btn = button(dial, "Atıl", bindcmd("dodge"))
 	rect(btn, 1, 1, 1, 1, -330, -113, -241, -49)
 	btn.focus_mode = FOCUS_NONE
+	var legend = panel(hud, Color(.035, .075, .08, .77), Color(GOLD, .22), 14)
+	rect(legend, .285, 1, .715, 1, 0, -47, 0, -12)
 	movehint = label(hud, "", 17, CREAM)
 	rect(movehint, .23, 1, .77, 1, 0, -47, 0, -12)
 	movehint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -278,7 +289,7 @@ func gameplay():
 
 
 func set_goal(area: String, task: String):
-	place.text = area.to_upper()
+	place.text = area.replace("i", "İ").to_upper()
 	objective.text = task
 
 
@@ -296,6 +307,8 @@ func guidance(where: Vector2, meters: float, near: bool, act: String, sname: Str
 	prompt.disabled = not near
 	cast_button.text = sname if sname != "" else "Büyü yok"
 	cast_button.disabled = sname == ""
+	cast_button.visible = sname != ""
+	cycle_button.visible = sname != ""
 	movehint.text = (
 		extra
 		if extra != ""
@@ -317,7 +330,7 @@ func ribbon(name_: String, sub: String):
 	new_page()
 	var a = panel(page, Color(.025, .065, .067, .76))
 	rect(a, 0, .71, 1, 1)
-	var l = label(a, sub.to_upper(), 18, GOLD)
+	var l = label(a, sub.replace("i", "İ").to_upper(), 18, GOLD)
 	rect(l, .07, .13, .8, .36)
 	l = label(a, name_, 45, CREAM, true)
 	rect(l, .07, .33, .72, .85)
@@ -333,7 +346,7 @@ func dialogue(speaker: String, text: String, count: String):
 	g.mouse_filter = MOUSE_FILTER_IGNORE
 	var p = panel(page, Color(.043, .10, .108, .97), Color(GOLD, .55), 12)
 	rect(p, .065, 1, .935, 1, 0, -234, 0, -27)
-	var l = label(p, "◆   " + speaker.to_upper(), 19, GOLD)
+	var l = label(p, "◆   " + speaker.replace("i", "İ").to_upper(), 19, GOLD)
 	rect(l, 0, 0, .72, 0, 25, 10, 0, 45)
 	l = label(p, count, 16, MUTED)
 	rect(l, .73, 0, 1, 0, 0, 10, -25, 43)

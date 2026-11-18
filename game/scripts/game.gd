@@ -107,7 +107,7 @@ var round_no = -1
 var lookout
 var watch_ring
 var practice_disc
-var movement_logged=false
+var movement_logged = false
 var course_wave = 0.
 var world
 var hero
@@ -179,6 +179,8 @@ var nearby_note = -1
 var nearby_clue = -1
 var ritual_mode = ""
 var after_unlock = ""
+var crossing = 0.
+var cross_start = Vector3.ZERO
 var camera_ready = false
 var book_page = 0
 var codex_page = 0
@@ -332,6 +334,9 @@ func start(restore: bool):
 			hero.position = saved
 		yaw = old.get("yaw", 0.)
 		camera_ready = false
+	if old.get("complete", false):
+		completed = true
+		cmd("end_back")
 	checkpoint()
 
 
@@ -367,7 +372,7 @@ func build_zone(z: int):
 	hero = Actor.new()
 	world.add_child(hero)
 	hero.make("İlyan")
-	hero.position = world.loc(8,1) if zone==0 else world.loc(0,0)
+	hero.position = world.loc(8, 1) if zone == 0 else world.loc(0, 0)
 	hero.heading = PI
 	hero.rotation.y = PI
 	yaw = 0
@@ -407,7 +412,7 @@ func enter(i: int, restore = false):
 		practice_disc.queue_free()
 	practice_disc = null
 	index = i
-	print("AV_BEAT ",i)
+	print("AV_BEAT ", i)
 	beat = beats[index]
 	var different = int(beat.zone) != zone
 	if different:
@@ -424,6 +429,10 @@ func enter(i: int, restore = false):
 	world.stage(beat)
 	if is_instance_valid(hero.mark):
 		hero.mark.visible = zone >= 2 or beat.model == "mark" or flags.has("revealed")
+	if zone == 6:
+		world.reversed = (
+			(beat.model == "wheel" and beat.kind == "look") or flags.has("reverse_current")
+		)
 	if beat.model == "mark":
 		flags["revealed"] = true
 	if beat.kind == "search":
@@ -520,7 +529,7 @@ func conversation(pages: Array, continuation: String, at: Vector3):
 
 
 func show_line():
-	print("AV_LINE ",index,":",line_no)
+	print("AV_LINE ", index, ":", line_no)
 	var ln = lines[line_no]
 	ui.dialogue(ln[0], ln[1], "%02d  /  %02d" % [line_no + 1, lines.size()])
 	narrate(ln[1])
@@ -619,6 +628,16 @@ func stage_action():
 			{"q": "Bu ölçü için hangi büyüyü hazırlarsın?", "correct": need, "options": opts},
 			"spell"
 		)
+	elif k == "gate":
+		mode = "crossing"
+		crossing = 0.
+		cross_start = hero.position
+		clear_input()
+		var basin = world.point(beat.at)
+		world.window_water(basin)
+		audio.fx("water")
+		world.person_on_set("Tamar", basin + Vector3(-1.9, 0, -.9)).gesture("Spellcasting", 3.3)
+		ui.ribbon("Su Eşiği", "Geçidi Tamar açtı. Adımı İlyan atıyor.")
 	elif k == "trail":
 		explore()
 		trail = true
@@ -663,6 +682,9 @@ func ritual_fx(id: String, ok: bool):
 func pass_ritual():
 	if mode != "ritual":
 		return
+	if ritual_mode == "testgust":
+		flags["reverse_current"] = true
+		world.reversed = true
 	var k = ritual_mode.trim_prefix("test")
 	if ACTS.has(k):
 		var id = int(ACTS[k])
@@ -841,6 +863,22 @@ func _physics_process(dt):
 	if autosave > 12.:
 		autosave = 0.
 		checkpoint()
+	if mode == "crossing":
+		crossing += delta
+		var t = smoothstep(.14, 2.85, crossing)
+		var target = world.point(beat.at) + Vector3(0, 0, -1.75)
+		var dir = (target - cross_start).normalized()
+		hero.position = cross_start.lerp(target, t) + Vector3.DOWN * .20 * t
+		hero.motion(1.45, dir, delta)
+		var focus = hero.position + Vector3.UP
+		var rail = focus + Vector3(3.7 - t, 1.14, 4.3 - t * 1.3)
+		camera.position = camera.position.lerp(rail, 1. - exp(-delta * 3.))
+		camera.look_at(focus)
+		world.frame(delta, hero.position)
+		camera.fov = lerpf(camera.fov, 48., delta * 3.)
+		if crossing >= 3.25:
+			advance()
+		return
 	if mode == "ribbon":
 		ribbon_time -= delta
 		if ribbon_time <= 0:
@@ -994,8 +1032,8 @@ func walk(dt):
 	var v = p - old
 	var speed = Vector2(v.x, v.z).length() / dt
 	hero.motion(speed, Vector3(v.x, 0, v.z).normalized(), dt)
-	if speed>.55 and not movement_logged:
-		movement_logged=true
+	if speed > .55 and not movement_logged:
+		movement_logged = true
 		print("AV_MOVED")
 	last_step += speed * dt
 	if last_step > 1.18:
@@ -1062,7 +1100,10 @@ func cmd(key: String):
 			checkpoint()
 			open_title()
 		"close_ribbon":
-			explore()
+			if mode == "crossing":
+				advance()
+			else:
+				explore()
 		"interact":
 			interact()
 		"cast":
@@ -1281,6 +1322,8 @@ func show_book():
 
 func back():
 	match mode:
+		"crossing":
+			advance()
 		"title":
 			get_tree().quit()
 		"ribbon":

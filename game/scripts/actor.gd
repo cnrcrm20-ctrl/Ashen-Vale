@@ -41,6 +41,13 @@ func make(person: String):
 			m.hide()
 		if person in ["Ruva", "Hedi", "Ese"] and "_Hat" in n:
 			m.hide()
+		if "_Cape" in n and person in ["İlyan", "Mina", "Tamar", "Ekin"]:
+			var cloth = StandardMaterial3D.new()
+			cloth.albedo_color = Color(
+				{"İlyan": "#aa613e", "Mina": "#52706b", "Tamar": "#5c6367", "Ekin": "#627b75"}[person]
+			)
+			cloth.roughness = .96
+			m.material_override = cloth
 		if person == "Sarpel" and "_Helmet" in n:
 			m.hide()
 	var players = rig.find_children("*", "AnimationPlayer", true, false)
@@ -57,20 +64,39 @@ func make(person: String):
 			var sk: Skeleton3D = skins[0]
 			for i in range(sk.get_bone_count()):
 				var bn = sk.get_bone_name(i).to_lower()
-				if bn in ["hand.r", "hand_r", "handright", "hand_right", "wrist.r", "hand_r_0"]:
+				if bn in ["wrist.r", "wrist_r"]:
 					var bone = BoneAttachment3D.new()
 					sk.add_child(bone)
 					bone.bone_name = sk.get_bone_name(i)
 					mark = MeshInstance3D.new()
-					var gem = SphereMesh.new()
-					gem.radius = .037
-					gem.height = .074
-					mark.mesh = gem
+					var st = SurfaceTool.new()
+					st.begin(Mesh.PRIMITIVE_TRIANGLES)
+					for arc in [-1, 1]:
+						for j in range(11):
+							var p = (float(j) / 11. - .5) * 2.35
+							var q = (float(j + 1) / 11. - .5) * 2.35
+							for k in [
+								[p, .054], [q, .054], [q, .042], [p, .054], [q, .042], [p, .042]
+							]:
+								st.add_vertex(
+									Vector3(arc * (.017 + cos(k[0]) * k[1]), sin(k[0]) * k[1], 0)
+								)
+					for k in [
+						Vector2(-.003, -.037),
+						Vector2(.004, -.037),
+						Vector2(.003, .037),
+						Vector2(-.003, -.037),
+						Vector2(.003, .037),
+						Vector2(-.004, .037)
+					]:
+						st.add_vertex(Vector3(k.x, k.y, 0))
+					mark.mesh = st.commit()
 					bone.add_child(mark)
+					mark.position = Vector3(0, .02, .07)
 					var mat = StandardMaterial3D.new()
-					mat.albedo_color = Color("ffbf77")
-					mat.emission_enabled = true
-					mat.emission = Color("ee913f")
+					mat.albedo_color = Color("a2704a")
+					mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+					mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 					mark.material_override = mat
 					break
 
