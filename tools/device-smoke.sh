@@ -11,9 +11,18 @@ SDKMANAGER=$(command -v sdkmanager || find "$ANDROID_HOME/cmdline-tools" -name s
 # when yes exits on the closed input pipe.
 (set +o pipefail; yes | "$SDKMANAGER" --licenses >"$D/licenses.log" 2>&1)
 "$SDKMANAGER" 'platform-tools' 'emulator' 'system-images;android-31;default;x86_64'  >"$D/sdk.log" 2>&1 || { tail -30 "$D/sdk.log";exit 1; }
-adb version; AVD=ashen_api31; printf 'no\n' | "$AVDMANAGER" create avd --force -n "$AVD" -k 'system-images;android-31;default;x86_64' --device pixel_2
+adb version
+# New cmdline-tools may create AVDs under XDG_CONFIG_HOME while the emulator
+# still searches ~/.android/avd. Point both tools at the same disposable store.
+export ANDROID_USER_HOME="${RUNNER_TEMP:-/tmp}/ashen-android-user"
+export ANDROID_EMULATOR_HOME="$ANDROID_USER_HOME" ANDROID_AVD_HOME="$ANDROID_USER_HOME/avd"
+mkdir -p "$ANDROID_AVD_HOME"
+AVD=ashen_api31; printf 'no\n' | "$AVDMANAGER" create avd --force -n "$AVD" --path "$ANDROID_AVD_HOME/$AVD.avd" -k 'system-images;android-31;default;x86_64' --device pixel_2
+test -s "$ANDROID_AVD_HOME/$AVD.avd/config.ini"
+printf 'avd.ini.encoding=UTF-8\npath=%s\ntarget=android-31\n' "$ANDROID_AVD_HOME/$AVD.avd" > "$ANDROID_AVD_HOME/$AVD.ini"
 if [[ -e /dev/kvm ]]; then sudo chmod a+rw /dev/kvm; fi
 export ANDROID_SERIAL=emulator-5554; E="$ANDROID_HOME/emulator/emulator"; AVDLOG="$D/emulator.log"
+"$E" -list-avds | grep -Fx "$AVD"
 adb start-server
 "$E" -version | head -8 || true
 "$E" -accel-check || true
