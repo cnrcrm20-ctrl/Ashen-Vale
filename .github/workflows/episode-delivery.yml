@@ -37,12 +37,21 @@ jobs:
       - name: Verify offline signature and identical game payload
         run: |
           set -euo pipefail
+          mkdir -p build
+          exec > >(tee build/delivery.log) 2>&1
+          trap 'echo "::error title=Signed package check::line $LINENO: $BASH_COMMAND"' ERR
           APK=build/android/Ashen-Vale-Episode-1.apk
           python3 tools/signature_patch.py apply build/unsigned/*.apk delivery/episode1.sigpatch "$APK"
           echo "$(jq -r .sha256 delivery/episode1.json)  $APK" | sha256sum -c -
           BT=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
-          "$BT/apksigner" verify --verbose --print-certs "$APK" > build/signature.log
-          grep -Fx "Signer #1 certificate SHA-256 digest: $(jq -r .certificate_sha256 delivery/episode1.json)" build/signature.log
+          "$BT/apksigner" verify --verbose --print-certs "$APK" > build/signature.log 2>&1
+          head -26 build/signature.log
+          python3 - <<'PYCODE'
+          import json, re, pathlib
+          s=pathlib.Path('build/signature.log').read_text()
+          certs=set(re.findall(r'(?im)^.*certificate SHA-256 digest:\s*([0-9a-f]{64})\s*$',s))
+          assert {x.lower() for x in certs}=={json.load(open('delivery/episode1.json'))['certificate_sha256']},certs
+          PYCODE
           "$BT/zipalign" -c -P 16 4 "$APK"
       - name: Install and play the exact signed package on Android
         run: bash tools/device-smoke.sh build/android/Ashen-Vale-Episode-1.apk
@@ -56,6 +65,7 @@ jobs:
         with:
           name: Signed-Android-QA-${{ steps.report.outputs.ref }}
           path: |
+            build/*.log
             build/device/*.log
             build/shots/*.png
       - name: Publish only Bölüm I and download it back for verification
