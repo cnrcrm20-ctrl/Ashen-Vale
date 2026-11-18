@@ -27,7 +27,7 @@ adb start-server
 "$E" -version | head -8 || true
 "$E" -accel-check || true
 ls -l /dev/kvm || true
-"$E" @"$AVD" -port 5554 -memory 2048 -cores 2 -no-window -no-snapshot -no-audio -no-boot-anim -gpu swiftshader -feature -Vulkan -camera-back none -camera-front none >"$AVDLOG" 2>&1 & EMUPID=$!
+"$E" @"$AVD" -port 5554 -memory 2048 -cores 2 -no-window -no-snapshot -no-audio -no-boot-anim -gpu "${EMULATOR_GPU:-host}" -feature -Vulkan -camera-back none -camera-front none >"$AVDLOG" 2>&1 & EMUPID=$!
 finish(){ timeout 5 adb logcat -d -s 'godot:I' 'Godot:I' 'AndroidRuntime:E' >"$D/game.log" 2>&1 || :; tail -50 "$D/game.log" || :; tail -35 "$AVDLOG" || :; timeout 4 adb emu kill >/dev/null 2>&1 || :; kill "$EMUPID" 2>/dev/null || :; }; trap finish EXIT
 boot=no
 for n in {1..95}; do
@@ -50,5 +50,8 @@ tap 90 89;wait_mark 'AV_LINE 0:0';sleep 1;shot dialogue
 for n in 1 2 3; do tap 86 93;sleep .5;done; wait_mark 'AV_BEAT 1'
 # A real touch drag, not a debug teleport. Android save/resume is exercised by process death.
 adb shell input swipe "$((W*11/100))" "$((H*81/100))" "$((W*14/100))" "$((H*58/100))" 1500;wait_mark 'AV_MOVED'
-adb shell input keyevent 3;sleep 1;adb shell am force-stop "$PK";launch;tap 17 61;wait_mark 'AV_BEAT 1'; wait_mark 'AV_WALK';adb shell pidof "$PK";shot resumed
+adb logcat -d -s "godot:I" "Godot:I" >"$D/first-launch.log";adb shell input keyevent 3;sleep 1;adb shell am force-stop "$PK";launch;tap 17 61;wait_mark 'AV_BEAT 1'; wait_mark 'AV_WALK';adb shell pidof "$PK";shot resumed
+adb logcat -d -s 'godot:I' 'Godot:I' >"$D/resume.log"
+python3 tools/check-android-frames.py "$ROOT/build/shots" | tee "$D/frames.log"
+if grep -E 'Program linking failed|SHADER ERROR|SCRIPT ERROR:|FATAL EXCEPTION' "$D/first-launch.log" "$D/resume.log";then echo '::error::Android shader or script failure';exit 1;fi
 echo 'ANDROID_SMOKE PASS · signed install / title / settings / walk / touch dialogue / movement / process death / resume'
