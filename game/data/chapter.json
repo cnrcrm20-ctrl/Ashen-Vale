@@ -1,0 +1,1567 @@
+{
+ "zones": [
+  {
+   "name": "Kireçdam",
+   "subtitle": "Birinci gün · Üçoluk / Yukarı"
+  },
+  {
+   "name": "Üçoluk Pazarı",
+   "subtitle": "Birinci gün · Islak topuk izleri"
+  },
+  {
+   "name": "Ortak Avlu",
+   "subtitle": "Birinci gün · Ufuk Duvarları"
+  },
+  {
+   "name": "Ölçü Evi",
+   "subtitle": "Birinci gün · Üç krallığın okulu"
+  },
+  {
+   "name": "Kandil Terası",
+   "subtitle": "Birinci akşam · Ateşin ölçüsü"
+  },
+  {
+   "name": "Sekiz Dal Avlusu",
+   "subtitle": "İkinci gün · İki kişinin tanıklığı"
+  },
+  {
+   "name": "Üçdil Savağı",
+   "subtitle": "Üçüncü gün · Okun tersine"
+  }
+ ],
+ "beats": [
+  {
+   "id": 0,
+   "zone": 0,
+   "at": [
+    10.0,
+    2.0
+   ],
+   "model": "bowl",
+   "kind": "look",
+   "title": "Kâsendeki zeytinleri say",
+   "lines": [
+    [
+     "İlyan",
+     "İki zeytin doyurmak içindi. Üçüncüsü vedalaşmak. Hedi bana bakmadan kâseyi önüme ittiğinde anlamalıydım."
+    ],
+    [
+     "Mina",
+     "Seninkiler bugün iri. Bak, benimkinin bir yanı buruşuk. Tabağa bakmayı bırakırsan belki değiştiririz."
+    ],
+    [
+     "İlyan",
+     "Ortadakini al. Yemezsen cebine koy. Tuzlu sudan çıkarınca uzun dayanır."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 1,
+   "zone": 0,
+   "at": [
+    37.0,
+    -7.0
+   ],
+   "model": "Mina",
+   "kind": "talk",
+   "title": "Mina'nın yanına otur",
+   "lines": [
+    [
+     "Mina",
+     "Daha katır gelmedi. Hedi sabah abanın söküğünü dikti. Lacivert yerine siyah ip takmış; demek gece görmeden dikmiş. Gidiyorsun, değil mi?"
+    ],
+    [
+     "İlyan",
+     "Sen de mi saydın? Ben daha kimseye gitmek istediğimi söylemedim."
+    ],
+    [
+     "Mina",
+     "İstemekle gitmek aynı şey olsaydı bu evde çok daha az yatak olurdu. Hadi. En azından yazdıkları şeyi okut."
+    ]
+   ],
+   "clues": [],
+   "ask": {
+    "correct": -1,
+    "q": "Mina'ya ne söylersin?",
+    "options": [
+     [
+      "Önce sözleşmeyi okuyacağım.",
+      "Mina: Beş yazı parmağınla say. İki elimiz yetiyor ama az zaman değil."
+     ],
+     [
+      "Sana haber göndereceğim.",
+      "Mina: Nereye yazacağımı da söyle. Sadece uzak dersen seni nerede sorayım?"
+     ]
+    ]
+   }
+  },
+  {
+   "id": 2,
+   "zone": 0,
+   "at": [
+    62.0,
+    5.0
+   ],
+   "model": "desk",
+   "kind": "search",
+   "title": "İskele sandığındaki üç kanıtı incele",
+   "lines": [
+    [
+     "İlyan",
+     "Gidecek olan benim. Neden en son ben okuyorum? İsmi yazmanın, insanı dinlemekten bu kadar kolay olmaması lazım."
+    ]
+   ],
+   "clues": [
+    [
+     "Tuzlu kamış",
+     "Kamış beyaza kesmiş. Sandık Üçoluk'a ilk defa gelmiyor; başka çocukların yükünü de taşımış."
+    ],
+    [
+     "Kil sözleşme",
+     "Beş hasat boyunca iskele işi. Son satırda henüz Hedi'nin mührü yok. Gitmek istediğine dair tek bir kelime de yok."
+    ],
+    [
+     "Hane kaydı",
+     "İlyan'ın adı doğru. Yanında «hiç kimsesi yok» yazıyor. İki adım ötede Mina, eli cebindeki zeytinde bekliyor."
+    ]
+   ]
+  },
+  {
+   "id": 3,
+   "zone": 0,
+   "at": [
+    98.0,
+    -8.0
+   ],
+   "model": "Hedi",
+   "kind": "talk",
+   "title": "Hedi'ye tabletin son satırını sor",
+   "lines": [
+    [
+     "Hedi",
+     "Bak evlat. Mühür kuru. Ben burada dururken kâtip kendiliğinden senin elini kilin üstüne bastıramaz. Ama o iskele önümüzdeki beş yazın ekmeğini de vaat ediyor."
+    ],
+    [
+     "İlyan",
+     "Gittim diye mi yazacaksın, gitmek istedi diye mi?"
+    ],
+    [
+     "Hedi",
+     "Benim kilime ikisi aynı sığmıyor. İstedi diye yazmam. Seni bir daha göremeyeceğim diye de yalan yazmam."
+    ],
+    [
+     "İlyan",
+     "Beş yaz sonra dönünce Mina benim bugünkü yaşımdan büyük olacak. Ona dönünce anlatırım demek kolay sizin için."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 4,
+   "zone": 0,
+   "at": [
+    129.0,
+    6.0
+   ],
+   "model": "fish",
+   "kind": "look",
+   "title": "Kuyunun eşiğinde kil balığın kuyruğunu al",
+   "lines": [
+    [
+     "Mina",
+     "Başını ben yaptım; hep ondan kırıldı sanıyorsun. Oysa sen de yüzgeci fazla incelttin. İkimiz de biraz bozduk yani. Baş bende kalacak."
+    ],
+    [
+     "İlyan",
+     "Benden ne istersin? Para getireceğimi söyleme. Param olmadığında utandırır o söz beni."
+    ],
+    [
+     "Mina",
+     "Bir yer adı gönder. Orada seni tanıyan biri yoksa ben buradan tanırım. Kuyruğu da kaybetme."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 5,
+   "zone": 0,
+   "at": [
+    157.0,
+    0.0
+   ],
+   "model": "wall",
+   "kind": "vault",
+   "title": "Bostan duvarını aş",
+   "lines": [
+    [
+     "Hedi",
+     "Kamışını indir, kâtip. Sen defterine yazdın diye bu çocuk yola çıkmış olmaz."
+    ],
+    [
+     "İlyan",
+     "Arkama bakarsam duracağım. Önümde bu duvar var; ötesinde bugün nereye gideceğime ben karar verebilirim."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 6,
+   "zone": 0,
+   "at": [
+    162.0,
+    0.0
+   ],
+   "model": "chest",
+   "kind": "escape",
+   "title": "Kâtibin sayımından önce bostan geçitlerini bul",
+   "lines": [
+    [
+     "Mina",
+     "Kâtibin saydığı biz değiliz; beş hasat boyunca kaç el çalışacak, onu sayıyor. Çeşmeye kadar kendin çık. Çivitli bezi görürsen doğru yerdesin."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 7,
+   "zone": 0,
+   "at": [
+    192.0,
+    3.0
+   ],
+   "model": "gate",
+   "kind": "exit",
+   "title": "Boyacıların sokağına in",
+   "lines": [
+    [
+     "İlyan",
+     "Sağ yanağım taze çivit. Geri dönsem Hedi yüzümden hangi yolu tuttuğumu anlayacak. Pazardan her zamanki gibi geç. Kimse birinin kaçtığını adımlarından bilmez."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 8,
+   "zone": 1,
+   "at": [
+    18.0,
+    -4.0
+   ],
+   "model": "stall",
+   "kind": "talk",
+   "title": "Boyacı tezgâhında gri pelerini sor",
+   "lines": [
+    [
+     "Boyacı",
+     "Tuzu sana mı verdiler yine? Bugün mavi ipliğin üstüne basma yeter. Az önce geçen adamın ayağı bütün yünü ıslattı. Sağ çizmesinden göl taşıyor sanki."
+    ],
+    [
+     "İlyan",
+     "Sol ayağı ses çıkarmıyor. Onu daha önce incir ağacının altında gördüm. Bir su yalağına bakmıştı. Orada gerçekten su yok."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 9,
+   "zone": 1,
+   "at": [
+    68.0,
+    4.0
+   ],
+   "model": "trace",
+   "kind": "search",
+   "title": "Tamar'ın yolunu üç izle doğrula",
+   "lines": [
+    [
+     "İlyan",
+     "Üç iz de aynı yere çıkıyor. Ama adamı bir kere kaybettim. Bu defa nereye bastığını görmek istiyorum."
+    ]
+   ],
+   "clues": [
+    [
+     "Topuk",
+     "Kuru tozda yalnız sağ topuk koyu. Bir yük arabasının ıslak teker izi gibi sürekli değil."
+    ],
+    [
+     "Çivit",
+     "İpteki yün ters tarafa dönmüş. Aradan bir pelerin omzu geçmiş. Lifler kurumuş ama kumaşın izi hâlâ duruyor."
+    ],
+    [
+     "İncir gölgesi",
+     "Çıplak köklerin arasında küçücük bir su halkası var. Halkada bu sokağa ait olmayan sarı bir lamba görünüyor."
+    ]
+   ]
+  },
+  {
+   "id": 10,
+   "zone": 1,
+   "at": [
+    101.0,
+    0.0
+   ],
+   "model": "Tamar",
+   "kind": "trail",
+   "title": "Eşikçiyi pazar boyunca izle",
+   "lines": [
+    [
+     "İlyan",
+     "Kâtibin katırını yukarı sokakta gördüm. Tamar yavaşladığında ben de yavaşlayacağım. Beni kaybettiğini sanarsa yine gözden kaybolur."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 11,
+   "zone": 1,
+   "at": [
+    177.0,
+    3.0
+   ],
+   "model": "basin",
+   "kind": "look",
+   "title": "Kuru yalağın suyuna bak",
+   "lines": [
+    [
+     "İlyan",
+     "Bir adım. Önünde duvar yoktu, basamak da yoktu. Öteki ayağını sudan içeri aldı. Gözlerim açık. Bu kez gerçekten gördüm."
+    ],
+    [
+     "Tamar",
+     "Elini çek. Öbür taraftaki ışık sana yakın göründü diye taş da yakın değildir."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 12,
+   "zone": 1,
+   "at": [
+    180.0,
+    -4.0
+   ],
+   "model": "Tamar",
+   "kind": "talk",
+   "title": "Neden takip ettiğini anlat",
+   "lines": [
+    [
+     "Tamar",
+     "Neden beni takip ediyorsun? Pazarın gürültüsünden buraya kadar bir kere bile sağa sapmadın."
+    ],
+    [
+     "İlyan",
+     "Geçen sefer de gittin. Gölgeye girmedin. Burada değildin artık. Hedi beni küçükken bu yalakta yıkardı; altında bir oda olsa bilirdim. Beni de götür oraya."
+    ],
+    [
+     "Tamar",
+     "Seni bekleyen biri vardır. O dünyanın adı bile yok senin dilinde. Nasıl isteyebiliyorsun?"
+    ],
+    [
+     "İlyan",
+     "Biliyorum diye yalan söylesem götürecek misin? Biri bekliyor diye bir yerlere gitmem yasak mı?"
+    ]
+   ],
+   "clues": [],
+   "ask": {
+    "correct": -1,
+    "q": "Tamar'ın bileğini bırakmasını beklerken…",
+    "options": [
+     [
+      "Önce adını sor.",
+      "Tamar: Tamar. Eşikçiyim. İnsanı değil, yolu teslim alırım. Seninkini şimdiye kadar sormamak hataydı."
+     ],
+     [
+      "Islak çizmesine bak.",
+      "Tamar: On üç kere taban değiştirdim. Eşik suyu eski deliği bulmayı hiç unutmuyor."
+     ]
+    ]
+   }
+  },
+  {
+   "id": 13,
+   "zone": 1,
+   "at": [
+    190.0,
+    6.0
+   ],
+   "model": "mark",
+   "kind": "look",
+   "title": "Sağ yenini sıyır",
+   "lines": [
+    [
+     "Tamar",
+     "Dur. Şu ortadaki ince çizgi suyla birlikte mi kıpırdadı? Onu silmene gerek yok. Dut lekesi de değil."
+    ],
+    [
+     "İlyan",
+     "Hedi yazın dut, kışın nar kabuğu derdi. Sen niye bana değil de koluma bakıyorsun?"
+    ],
+    [
+     "Tamar",
+     "On üç yıl önce Belis adında Üçoluklu bir çömlekçinin bebeğini Hedi'ye taşıdım. Yolda sustun. Yüzümü ağzına yaklaştırınca burnumu ısırdın. Daha dişin yoktu; aklımı almıştın."
+    ],
+    [
+     "İlyan",
+     "Balığı nasıl pişireceğini anneme sorabilirmişim. Tanısaydım. Bir de babam var mı anlatacağın?"
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 14,
+   "zone": 1,
+   "at": [
+    204.0,
+    -3.0
+   ],
+   "model": "Tamar",
+   "kind": "talk",
+   "title": "Babanın adını öğren",
+   "lines": [
+    [
+     "Tamar",
+     "Vadigon. Senin gibi büyünün ritmini ilk bakışta sezermiş. Bizden bir büyücüydü; ilah değildi. Kırılan bir küpü ustasının ek yerini bulamayacağı kadar iyi onarırmış. Vadi'de adını söyleyince kimsenin aklına sağlam bir küp gelmez."
+    ],
+    [
+     "İlyan",
+     "Bir kişinin aklına ne geliyor peki? Üç krallığı sıralama. Birini söyle, anlayabileyim."
+    ],
+    [
+     "Tamar",
+     "Naret adında bir kapıcı vardı. Vadigon'a kapı açmadı. Sesini elinden aldı. Diz çökersen geri veririm dedi. Naret çöktü, Vadigon sözünü tutmadı. Kız kardeşi ondan sonra her sabah iki kişilik günaydın dedi."
+    ],
+    [
+     "İlyan",
+     "Belis. Annemin adını burada söylesem kimse susmuyor. Şimdilik ikisini birden söylemek zorunda değilim, öyle mi?"
+    ],
+    [
+     "Tamar",
+     "Değilsin. Seni bir vakit Hedi'ye götüren bendim. Bugün onun evinden alan ben olmayacağım. Bu eşikten yürüyüp yürümemek sana kalır."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 15,
+   "zone": 1,
+   "at": [
+    221.0,
+    0.0
+   ],
+   "model": "portal",
+   "kind": "gate",
+   "title": "Su Eşiği'ne kendi isteğinle gir",
+   "lines": [
+    [
+     "İlyan",
+     "İçeride mektup yazılacak yer var mı? O zaman ilk iş oraya gideceğiz."
+    ],
+    [
+     "Tamar",
+     "Ben yolu açarım. Adımı sen atarsın. Sudaki otun gölgesini görüyor musun? Öteki kıyı o."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 16,
+   "zone": 2,
+   "at": [
+    16.0,
+    0.0
+   ],
+   "model": "vista",
+   "kind": "vista",
+   "title": "Sırttan vadiye ilk kez bak",
+   "lines": [
+    [
+     "İlyan",
+     "Suyun boğazıma gelmesini bekliyordum. Topuğuma ot değdi. Üçoluk tepemdeyse burada ikinci bir göğü nasıl görüyorum?"
+    ],
+    [
+     "Tamar",
+     "İki dünyanın toprağı ortak değil, bazı eşikleri ortak. Yukarı'da ne kadar kazarsan kaz bu sırtı bulamazsın. Bulut sandığın gri çizgi, Ufuk Duvarları. Burayla arası iki at değiştirecek kadar uzun."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 17,
+   "zone": 2,
+   "at": [
+    58.0,
+    -8.0
+   ],
+   "model": "pillar",
+   "kind": "search",
+   "title": "Üç krallığın ant taşını oku",
+   "lines": [
+    [
+     "Tamar",
+     "Ortak Avlu bir şehir kapısının içi değil. Hamamları, bostanları, iskeleleriyle bütün bir bölge. Nar ağaçları bittiğinde nöbetimizin de sınırı biter. Ufuk Duvarları ise bütün vadinin sınırı."
+    ]
+   ],
+   "clues": [
+    [
+     "Örs",
+     "Sarn'ın yüksek fırınlarından gelenler aynı örsü taşır. Burada buyruğu değil, antlaşmayı temsil eder."
+    ],
+    [
+     "Başak",
+     "Ovaş'ın otlakları nar sırasının çok ötesinde. Onun da yük hayvanı Avlu'da zorla alınamaz."
+    ],
+    [
+     "Kabuk",
+     "Meret'in kıyı yollarından gelen işaret. Üçü yan yana olmadan taşın üstündeki kayıt tamamlanmaz."
+    ]
+   ]
+  },
+  {
+   "id": 18,
+   "zone": 2,
+   "at": [
+    103.0,
+    9.0
+   ],
+   "model": "stall",
+   "kind": "talk",
+   "title": "Çömlekçi sekiğinde küpleri incele",
+   "lines": [
+    [
+     "Çömlekçi",
+     "Bunun içine inmek için basamak lazım evlat. Kulpundan kaldırırım dersen kulbu elinde kalır. Bak, içerideki çocuk fırından önce duvar kalınlığını ölçüyor."
+    ],
+    [
+     "İlyan",
+     "Annem de bunları mı bilirdi? Balığın boynu fırında niye kırıldı diye gözümü kapatınca ilk defa soracak biri geliyor aklıma."
+    ],
+    [
+     "Çömlekçi",
+     "İki parçayı da sakla. Öğrenirsin. Önce ikisini de yapan elleri hatırlamak lazım."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 19,
+   "zone": 2,
+   "at": [
+    109.0,
+    -4.0
+   ],
+   "model": "Tamar",
+   "kind": "witness",
+   "title": "Ortak Avlu'da mektubun yolunu sor",
+   "lines": [
+    [
+     "Tamar",
+     "Eşiği görmek her şeyi öğrenmek değil. Sana burayı üç kişinin gözünden göstereyim. Beni değil, birbirlerini nasıl düzelttiklerini dinle. Dönüşte sağ çizmenin dili olacak."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 20,
+   "zone": 2,
+   "at": [
+    151.0,
+    -9.0
+   ],
+   "model": "well",
+   "kind": "look",
+   "title": "Nar hattıyla Ufuk Duvarları'nı ayırt et",
+   "lines": [
+    [
+     "İlyan",
+     "Buraya güvendeyiz dediler. Ötedeki yol da aynı taşla döşeli. Hangisini aklımda tutacağım?"
+    ]
+   ],
+   "clues": [],
+   "ask": {
+    "correct": 1,
+    "q": "Güvenli bölgenin sınırı hangisi?",
+    "options": [
+     [
+      "Gri Ufuk Duvarları",
+      "Onlar bütün vadinin sınırı; kendi yolculuğun henüz oraya varmadı."
+     ],
+     [
+      "Nar ağaçları ve ant taşları",
+      "Tamar: Evet. Başkasının toprağına bir ayakla geçmek bile yeter. Yolu yazmadan öteye acele etme."
+     ],
+     [
+      "Su kemerinin sütunları",
+      "Kemer okulun su yolu. Gel onu yakından gör, sınır ondan farklı."
+     ]
+    ]
+   }
+  },
+  {
+   "id": 21,
+   "zone": 2,
+   "at": [
+    196.0,
+    7.0
+   ],
+   "model": "desk",
+   "kind": "letter",
+   "title": "Mina'ya söz verdiğin mektubu yaz",
+   "lines": [
+    [
+     "Mektupçu",
+     "Yer adı buraya. Mektubu yazarken yırtarsan bir tane daha veririm. Ama söylemek istediğin üç şeyi önce balmumunda denemek daha ucuz."
+    ],
+    [
+     "İlyan",
+     "Yerimin adı Ortak Avlu. Burada küplerin içine insan giriyor. Baş kısmını sakla. İlyan. Bu kadar kısa olursa orada olduğuma inanır mı?"
+    ],
+    [
+     "Tamar",
+     "Sen yazmışsan inanır. Üçoluk nöbetim yarın. Mektubunu bir başkasının torbasına koymayacağım."
+    ]
+   ],
+   "clues": [],
+   "ask": {
+    "correct": -1,
+    "q": "Mektubun dışına hangi izi bırakırsın?",
+    "options": [
+     [
+      "Balığın kuyruğu",
+      "Mina başını yaptığı balığı gözünü kapatsa tanır."
+     ],
+     [
+      "Üçüncü zeytin",
+      "Söz verdiğin sabahı avucunda taşıyacak."
+     ],
+     [
+      "Çivitli parmak",
+      "Yanağındaki boya mürekkebe karışıp küçük bir yol çizdi."
+     ]
+    ]
+   }
+  },
+  {
+   "id": 22,
+   "zone": 2,
+   "at": [
+    216.0,
+    5.0
+   ],
+   "model": "desk",
+   "kind": "chart0",
+   "title": "Mektubun yolunu balmumuna çiz",
+   "lines": [
+    [
+     "Mektupçu",
+     "Şu iki küçük çentiği yerinden oynatma: Ortak Avlu'dan çıkış ve astara teslim. Kendi elinle ulaştırmadığın mektubun kime emanet gittiğini bil. Balmumu ters dönerse yolu tekrar açarsın; kâğıdı ziyan etmezsin."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 23,
+   "zone": 2,
+   "at": [
+    242.0,
+    -4.0
+   ],
+   "model": "Tamar",
+   "kind": "talk",
+   "title": "Ölçü Evi'ne giden yolu bul",
+   "lines": [
+    [
+     "Tamar",
+     "Belis çömlekçiydi diye seni fırına bırakmıyorum. Vadigon büyücüydü diye de ustalara teslim etmiyorum. Bu okulun huyu başkadır: Kimden geldiğine değil, neyi gerçekten gördüğüne bakar."
+    ],
+    [
+     "İlyan",
+     "Olmazsa yalağı gösterecek misin? Bir evden kaçıp başka bir eve kilitlenmeyeceğim."
+    ],
+    [
+     "Tamar",
+     "Kendi çarıklarınla girdin. Onlarla çıkarsın. Ama gece taşlar soğur. Önce bir yatak iste."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 24,
+   "zone": 3,
+   "at": [
+    20.0,
+    -2.0
+   ],
+   "model": "Ruva",
+   "kind": "talk",
+   "title": "Ruva ile seti temizle",
+   "lines": [
+    [
+     "Ruva",
+     "Sana deri al dedim, sen çocuk getirdin Tamar. Ayağın hâlâ su alıyor mu? Çocuğa da bez ver. Sorular çamuru kurutmuyor."
+    ],
+    [
+     "İlyan",
+     "Adım İlyan. Üçoluk'tan geldim. Setin kenarındaki çalıları birlikte çekince su düzeldi. Bu da ders miydi?"
+    ],
+    [
+     "Ruva",
+     "Bir daha suyu keserlerse bana sormadan sebebine bakarsın artık. Burası Ölçü Evi; krallar birbirlerine değil, burada tartılmış bir ölçüye inanır."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 25,
+   "zone": 3,
+   "at": [
+    52.0,
+    7.0
+   ],
+   "model": "Oris",
+   "kind": "talk",
+   "title": "Konuk kaydına adını geçir",
+   "lines": [
+    [
+     "Oris",
+     "Sarn, Ovaş, Meret. Üç sütunum var. Yukarı için hangi sütunu işaretleyeyim? İlk kez bir isme yer bulamıyorum."
+    ],
+    [
+     "Ruva",
+     "Altı boş. Oraya yazarsın. Kimin evladı diye sorabilirsin; cevap verene kadar kapıda tutamazsın."
+    ],
+    [
+     "İlyan",
+     "Annem Belis. Çömlekçi. Öbür ismi bugün bende bırakın."
+    ]
+   ],
+   "clues": [],
+   "ask": {
+    "correct": -1,
+    "q": "Kil levhaya ne eklensin?",
+    "options": [
+     [
+      "Üçoluklu İlyan",
+      "Oris: Doğduğun yer sen yazınca herhangi bir krallıktan daha küçük görünmüyor."
+     ],
+     [
+      "Belis'in oğlu İlyan",
+      "Oris: Annenin mesleğini de yanına sığdırdım. Sana söylediklerinde okuyabilirsin."
+     ]
+    ]
+   }
+  },
+  {
+   "id": 26,
+   "zone": 3,
+   "at": [
+    59.0,
+    3.0
+   ],
+   "model": "Oris",
+   "kind": "register",
+   "title": "Konuk hanesini Oris ve Ekin'le hazırla",
+   "lines": [
+    [
+     "Oris",
+     "Ben mührü bulana kadar hazır satır arayıp durma. Üç sütuna da uymuyorsan boş bir kil ve iki göz yeter. Ekin, ona dördüncü bir kral seçme lütfen."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 27,
+   "zone": 3,
+   "at": [
+    91.0,
+    -9.0
+   ],
+   "model": "bed",
+   "kind": "search",
+   "title": "Yatakhanede kendine bir yer aç",
+   "lines": [
+    [
+     "Ekin",
+     "Daha gelmeden ayakkabını eline almışsın. Burada onları uyurken satmıyoruz. İstersen bu kuru tahtayı iki yatağın arasında tutarız."
+    ]
+   ],
+   "clues": [
+    [
+     "Altıncı yatak",
+     "Taş kemerin içine altı numaranın yatağı girmiş. Tahta soğuk, üstündeki yün sıcak."
+    ],
+    [
+     "Çarık tahtası",
+     "Kireçdam'da yeni gelenden çarığı kapıda alırlardı. Burada uyanınca ayağını nereye koyacağın belli."
+    ],
+    [
+     "Karıncalı harita",
+     "Bir köşesi incir lapasıyla yapıştırılmış. Karıncalar tam da krallık yollarından yürüyor."
+    ]
+   ]
+  },
+  {
+   "id": 28,
+   "zone": 3,
+   "at": [
+    125.0,
+    6.0
+   ],
+   "model": "Ekin",
+   "kind": "talk",
+   "title": "Ekin'in haritasını düzeltmesine yardım et",
+   "lines": [
+    [
+     "Ekin",
+     "Haritanın köşesini tutar mısın? İncir lapası pahalı yapıştırıcıdan kötü değilmiş. Sadece karıncalara yol ücreti sormayı unutmuşum."
+    ],
+    [
+     "İlyan",
+     "İğdeye benzeyen küçük işaret senin evin mi? Biz evleri haritaya yazmayız. Kireçdam desem herkes gösterir."
+    ],
+    [
+     "Ekin",
+     "İğdegediği. Ablam Deren orada. Bir gün buradan köye kadar yolu kendim ölçersem haritacı olmama kimse ses çıkaramaz. O vakte kadar köşeyi tutacak birine ihtiyacım var."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 29,
+   "zone": 3,
+   "at": [
+    141.0,
+    4.0
+   ],
+   "model": "desk",
+   "kind": "chart1",
+   "title": "Künkleri kesit çiziminde birleştir",
+   "lines": [
+    [
+     "Ekin",
+     "Karıncalar incirli köşeyi yedi. Su nereden giriyor biliyorum ama şu iki ölçü kabını görmeden çıkarırsam ondan sonraki okuyucu hangi kesite baktığımı anlayamaz. Bana tek bir sürekli hat çiz; suyun yönünü kâğıtla değiştirmiyoruz."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 30,
+   "zone": 3,
+   "at": [
+    162.0,
+    -6.0
+   ],
+   "model": "chest",
+   "kind": "look",
+   "title": "Balığın kuyruğunu yatağının yanına bırak",
+   "lines": [
+    [
+     "İlyan",
+     "Kuyruğun bir yanı perdahlı, öteki yanı Mina'nın elinin altında pürüzlü kalmış. Evrende ne kadar uzakta olursak olalım balığın eksik yarısı aynı."
+    ],
+    [
+     "Ekin",
+     "Onu sandığın üstüne koy. Kaybolursa kimin eşyasını aradığımızı biliyor oluruz. Akşam dersinde dönünce yine burada bulursun."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 31,
+   "zone": 3,
+   "at": [
+    201.0,
+    1.0
+   ],
+   "model": "bell",
+   "kind": "exit",
+   "title": "Akşam dersinin kandiline yetiş",
+   "lines": [
+    [
+     "Ruva",
+     "Aday avlusunda bir büyüyü kendin kurarsan seni öğrenci yazarız. İlk kez yapanların sorusu her yıl aynıdır. Ya hiç yanmazsa? O da dünyanın sonu değil. Önce kabına bak."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 32,
+   "zone": 4,
+   "at": [
+    17.0,
+    5.0
+   ],
+   "model": "lamp",
+   "kind": "search",
+   "title": "Ders kandilini hazırla",
+   "lines": [
+    [
+     "Ruva",
+     "Bir büyü tutmadığında dünyanın sana borçlu olduğunu sanmadan önce kabına bak. Şimdi önündeki fitili seç. Başkasınınkini yakmak kolay."
+    ]
+   ],
+   "clues": [
+    [
+     "Kil kâse",
+     "Seninkinin içinde yağ değil su var. Parıltıların hepsi ateşten gelmez."
+    ],
+    [
+     "Keten fitil",
+     "Fitilin ucu kâsenin kenarında kalmalı. Taşa bakıp yağın tutuşmasını isteme."
+    ],
+    [
+     "Yağ testisi",
+     "Testi elden ele dolaşıyor. Suyu limon dibine boşaltıp doğru malzemeyi koydun."
+    ]
+   ]
+  },
+  {
+   "id": 33,
+   "zone": 4,
+   "at": [
+    54.0,
+    -3.0
+   ],
+   "model": "Ruva",
+   "kind": "wick",
+   "title": "Fitil: hedefi seç, ateşi tut ve bırak",
+   "lines": [
+    [
+     "Ruva",
+     "Parmaklarının arasındaki boşluk incir çekirdeği kadar. Ateşi çağır; altın aralıkta elini bırak. Çok erken bırakırsan ışık kaybolur, geç bırakırsan yağ boşa gider."
+    ],
+    [
+     "İlyan",
+     "Ustanın elini çekmesinden önce sıcaklığın kesileceği anı hissediyorum. Bunu bilmek, ilk denemede kendi kandilimi yakacağım anlamına gelmiyor."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 34,
+   "zone": 4,
+   "at": [
+    81.0,
+    8.0
+   ],
+   "model": "lamp",
+   "kind": "wick",
+   "title": "İsli ikinci kandilde aynı ölçüyü bul",
+   "lines": [
+    [
+     "Ekin",
+     "Kandilleri karıştırdılar. Benim kabımı değil is kokan eskisini seç. Usta aynı el hareketinin başka bir kapta neye dönüştüğünü görmek istiyor."
+    ],
+    [
+     "İlyan",
+     "Bu kez bekleyeceğim. Küçük bir alev. Susam tanesi kadar kalsa yeter."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 35,
+   "zone": 4,
+   "at": [
+    105.0,
+    2.0
+   ],
+   "model": "Oris",
+   "kind": "talk",
+   "title": "Konuk yazısını öğrenciye çevir",
+   "lines": [
+    [
+     "Oris",
+     "Islak kil hâlâ burada. Konuk kelimesini siliyorum. Altına büyücü çırağı yazacağım. Vadide ilk kez bir insanın adını buraya yazıyorum; güzel yazmak için bir daha denesem darılır mısın?"
+    ],
+    [
+     "İlyan",
+     "Önlüğün bir boy büyük olduğunu da yazacak mısın? Hepsi beraber olunca bu gün bana gerçek gibi geliyor."
+    ],
+    [
+     "Ruva",
+     "Önlük senindir. Babanın eli iyiymiş diye öğrenci olmadın. Yanlış kandili yakıp doğrusunu öğrenebildiğin için oldun."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 36,
+   "zone": 4,
+   "at": [
+    139.0,
+    -7.0
+   ],
+   "model": "Sarpel",
+   "kind": "talk",
+   "title": "Akşam sofrasında kendine yer bul",
+   "lines": [
+    [
+     "Sarpel",
+     "Gece uğur düğümlerinizi çiviye asın. Dayım yukarılıların bunları pazarda sattığını görmüş. Benimkini sabah yerde bulmayayım."
+    ],
+    [
+     "İlyan",
+     "Bir uğur düğümünün ne olduğunu bile bilmiyorum. Kaç para ediyormuş? Bu soruyu sorunca kızıyorsun ama ilk fiyatı biçen sendin."
+    ],
+    [
+     "Ekin",
+     "Herkesin kâsesi önünde. İlyan'ın kaybolan tek şeyi tabağından yuvarlanan erik. İstersen onu yerden al, dayından dinlediklerini sonra anlatırsın."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 37,
+   "zone": 4,
+   "at": [
+    178.0,
+    6.0
+   ],
+   "model": "Tamar",
+   "kind": "talk",
+   "title": "Ese'nin yarım bıraktığı sofrayı anla",
+   "lines": [
+    [
+     "İlyan",
+     "Vadigon da ilk denemede mi yaparmış? Neden kadın kâseleri bırakıp gitti? Ben kötü bir şey söylemek istemedim."
+    ],
+    [
+     "Tamar",
+     "Adı Ese. Naret'in kız kardeşi. Bu akşam bir adı iki kişi başka sebeple duydu. Sen babanı sormaya çalıştın. O, belki hâlâ iki kişilik günaydın diyor."
+    ],
+    [
+     "İlyan",
+     "Ruva kaydı alırken biliyor muydu? Ya Sarpel? Ben bilmeden önce bile bana öyle bakacak olan kaç kişi var?"
+    ],
+    [
+     "Tamar",
+     "Ruva biliyor. Sarpel bilmiyor. Senin kimden geldiğini bilmeden de yukarıdan gelmeni sevmeyebilir. Onun fikrini düzeltme borcu bir çocuğun omzuna bırakılmaz."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 38,
+   "zone": 4,
+   "at": [
+    195.0,
+    -5.0
+   ],
+   "model": "Ese",
+   "kind": "talk",
+   "title": "Sabah kâseni Ese'ye uzat",
+   "lines": [
+    [
+     "Ese",
+     "Mercimek sıcak. Tabağı iki elle tut. Babanın adını duyunca çıktım; senin payını eksiltmek için değil."
+    ],
+    [
+     "İlyan",
+     "Teşekkür ederim. Adını sormayacağım bugün. Ağabeyin yerine sana bir şey söylememi de istemezsin herhalde."
+    ],
+    [
+     "Ese",
+     "Bugün ikimiz de çorbamızı dökmeden içelim. Kimi sabah bu yeter."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 39,
+   "zone": 5,
+   "at": [
+    20.0,
+    4.0
+   ],
+   "model": "pillar",
+   "kind": "search",
+   "title": "Sekiz dalın sicilini taşta oku",
+   "lines": [
+    [
+     "Ruva",
+     "Otuz dört çentik, sekiz dal. Sekiz karanlık uygulamayı önce tanımayı öğrenirsiniz, uygulamayı değil. Birinin sesini almışlarsa sessizliğini razı olduğu anlamına yormayın."
+    ]
+   ],
+   "clues": [
+    [
+     "Çekirdek ve tüy",
+     "Kor ve Işık ısıyı, Yel ise hareketi yönetir. Yan yana durmaları aynı şey oldukları anlamına gelmez."
+    ],
+    [
+     "Oluk ve saçak",
+     "Akış suya yol verir. Koruma bir anlığına arkanda birini saklayabilir. Her dalın son çentiği karadır."
+    ],
+    [
+     "Çember ve kıyı",
+     "İz ve Yankı olanı duyar; Eşik ve Mesafe yerleri bağlar. Taş ve Toprak ile Can ve Bağ ötekilerini tamamlar."
+    ]
+   ]
+  },
+  {
+   "id": 40,
+   "zone": 5,
+   "at": [
+    57.0,
+    -7.0
+   ],
+   "model": "pipe",
+   "kind": "water",
+   "title": "Dipses: üç künkün sesini karşılaştır",
+   "lines": [
+    [
+     "Ruva",
+     "Üç borunun yalnız birinde su yürüyor. Tek bir sese güvenme. Her birini yokla. Tozun yürüyen halkalarına bak. Peşinden gelen düzenli vuruş senin bileğindir."
+    ],
+    [
+     "Ekin",
+     "Elini bastırırsan kendi nabzını duvarın sesi sanırsın. Suyu seçmeden önce üç izi de nazikçe dinle. Sesini kapatsan bile tozun yönünü görebilirsin."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 41,
+   "zone": 5,
+   "at": [
+    88.0,
+    6.0
+   ],
+   "model": "pipe",
+   "kind": "water",
+   "title": "İkinci ölçüyü Ekin'le doğrula",
+   "lines": [
+    [
+     "Ekin",
+     "Usta suyu öteki hatta çevirdi. Demin doğru olan künk şimdi de doğru olacak diye bir şey yok. Hangi halkalar hareket ediyor? Bu sefer kaydı ben tutuyorum."
+    ],
+    [
+     "İlyan",
+     "Şimdi iki şeyi birden duyuyorum. Benimki ayağa kalkınca da burada. Öteki ise yürüdüğüm yere göre değişiyor. Onu yaz."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 42,
+   "zone": 5,
+   "at": [
+    115.0,
+    -4.0
+   ],
+   "model": "disc",
+   "kind": "dodge",
+   "title": "Yaydan önce püskülü oku: yana atıl",
+   "lines": [
+    [
+     "Ruva",
+     "Yün diskin gelişi can yakmaz ama omuzda toz bırakır. Püskül gerildiğinde henüz erken. Sana yaklaşırken yana çekil. Büyü yapmadan da yer değiştirebilirsin."
+    ],
+    [
+     "Sarpel",
+     "Gece de yolunu bulursun artık diye gülecekseniz bakın: Ben ayın sivri ucunu önlüğümden silmiyorum."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 43,
+   "zone": 5,
+   "at": [
+    142.0,
+    5.0
+   ],
+   "model": "disc",
+   "kind": "guard",
+   "title": "Siper: üç gelişte kavis kur",
+   "lines": [
+    [
+     "Ruva",
+     "Korumayı diski görür görmez kurarsan vuruş geldiğinde sönmüş olur. Püsküle bak, yaklaşanı izle, altın anda karşıla. Ayakların da seninle birlikte ağırlık alsın."
+    ],
+    [
+     "İlyan",
+     "Kavis önümde kalsa bile ben onun arkasındayım. İlk kez dizimin titreyişi kötü bir şey değilmiş gibi geliyor."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 44,
+   "zone": 5,
+   "at": [
+    168.0,
+    -6.0
+   ],
+   "model": "basket",
+   "kind": "gust",
+   "title": "Yel Avucu: diski saz sepete yönlendir",
+   "lines": [
+    [
+     "Ekin",
+     "Uçurmak kolay, sepette bırakmak zor. Ben duvardan geri gelen diski enseme yedim. İki yana yönü düzelt, sonra itișini ölç. Sepet kapı değil; büyüklüğü var."
+    ],
+    [
+     "Ruva",
+     "Her atıştan sonra nereye düştüğüne bak. Bir sonraki için önce yönü, sonra gücü değiştir. Boşa giden denemede kimsenin canı yanmıyor."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 45,
+   "zone": 5,
+   "at": [
+    196.0,
+    7.0
+   ],
+   "model": "basket",
+   "kind": "gust",
+   "title": "Öbür sepete farklı bir yay çiz",
+   "lines": [
+    [
+     "İlyan",
+     "Yakındaki sepete verdiğim güç ötekine az geliyor. Ekin, çizgiyi tut. Islak kâseye değil sazın dibine düşürmek istiyorum."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 46,
+   "zone": 5,
+   "at": [
+    200.0,
+    1.0
+   ],
+   "model": "Ruva",
+   "kind": "paired",
+   "title": "Dört ölçülük eşli açık alan talimini bitir",
+   "lines": [
+    [
+     "Ruva",
+     "Levhayı bırak. Bu kez ayaklarınla yer seçip elinle dal seçeceksin. Ekin kaydederken dört ayrı noktaya yürü. Kandili, künkü, diski ve sepeti birbirinden ayırmadan büyünün adı sana yardım etmez."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 47,
+   "zone": 5,
+   "at": [
+    225.0,
+    -6.0
+   ],
+   "model": "Ekin",
+   "kind": "talk",
+   "title": "Deren'in mektubunu haritayla eşleştir",
+   "lines": [
+    [
+     "Ekin",
+     "Deren yazdı. Kuyu başındaki sıra üç haftadır uzuyormuş. Haritada hâlâ İğdegediği'ne bol su var. Hangisi yanlış? Bana inan demiyorum. Benimle ölçmeye gelir misin?"
+    ],
+    [
+     "İlyan",
+     "Suyun yönünü ancak yürürken anlayabiliyorum. Duruyorsa bilmiyoruz diye yazmalıyız. Bunu sana özel bir iyilik diye değil doğru kayıt diye söyleyeceğim."
+    ]
+   ],
+   "clues": [],
+   "ask": {
+    "correct": 0,
+    "q": "Haritanın kenarına hangi not düşülür?",
+    "options": [
+     [
+      "Duruyorsa bilmiyoruz.",
+      "Ekin: Tamam. Bunu silemeyecekleri kadar küçük yazdım."
+     ],
+     [
+      "Köy terk edilmiş.",
+      "Ekin: Ablam orada. Bir su çizgisi insanların yok olduğu anlamına gelmez."
+     ],
+     [
+      "Suyu kimin aldığı belli.",
+      "İlyan: Daha oraya bile gitmedik. Görmediğim eli yazamam."
+     ]
+    ]
+   }
+  },
+  {
+   "id": 48,
+   "zone": 5,
+   "at": [
+    249.0,
+    0.0
+   ],
+   "model": "Ruva",
+   "kind": "exit",
+   "title": "Savak için ölçü çiftini kaydettir",
+   "lines": [
+    [
+     "Ruva",
+     "Bir okuyucu, bir kaydedici. Nar sınırının berisine kadar gideceksiniz. Kaydı almış olmak onun doğru olduğunu göstermez. İki kişi, iki ayrı göz. Sabah karşılaşırız."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 49,
+   "zone": 6,
+   "at": [
+    23.0,
+    -4.0
+   ],
+   "model": "stone",
+   "kind": "vista",
+   "title": "Beyaz sınır taşını bul",
+   "lines": [
+    [
+     "İlyan",
+     "Bir dünya bitiyorsa orada koskoca bir kapı bekledim. Taşın ötesinde bir eşek, berisinde soğan ayıklayan bir nöbetçi var. Dışarısı aynı kokuyor."
+    ],
+    [
+     "Ruva",
+     "Bugün buraya kadar. Ötesine geçmek için yolu ve dönüş gününü yazarsınız. Bir ağaç sizi tutmaz. Verdiğiniz söz tutar."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 50,
+   "zone": 6,
+   "at": [
+    52.0,
+    4.0
+   ],
+   "model": "desk",
+   "kind": "search",
+   "title": "Üç su payının adlarını eşleştir",
+   "lines": [
+    [
+     "Ekin",
+     "Okun ne söylediğini gördük. Şimdi suyun ona uyup uymadığını hiçbir şey yazmadan önce kontrol edeceğiz."
+    ]
+   ],
+   "clues": [
+    [
+     "Hamam oyuğu",
+     "Sol kanal Ortak Avlu hamamlarına gider. Tabanında sabah yıkamasından kalma açık renk bir köpük var."
+    ],
+    [
+     "Çarşı oyuğu",
+     "Ortadaki kanal çarşı testilerini besler. Akış düzenli, işaret çarkı rahat dönüyor."
+    ],
+    [
+     "Köyün oku",
+     "Üçüncü ağızdaki eski ok İğdegediği'ne bakıyor. Ölçü yarığının kenarına dünün çamuru oturmuş."
+    ]
+   ]
+  },
+  {
+   "id": 51,
+   "zone": 6,
+   "at": [
+    87.0,
+    -6.0
+   ],
+   "model": "lamp",
+   "kind": "testwick",
+   "title": "Karanlık levhayı Fitil ile aydınlat",
+   "lines": [
+    [
+     "İlyan",
+     "Kandilin yağı var. Fitil alta kaçmış; onu açığa çıkardım. Şimdi ışığı yalnız levhaya tutmalıyım. Ders avlusunda yanımda Ekin'in kâsesi vardı; burada onun yazısı var."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 52,
+   "zone": 6,
+   "at": [
+    117.0,
+    5.0
+   ],
+   "model": "pipe",
+   "kind": "testwater",
+   "title": "Üçüncü ağzı Dipses ile dinle",
+   "lines": [
+    [
+     "Ekin",
+     "Birinci hattın sesi belli. İkinci de temiz. Üçüncüde halkalar birbirine giriyor. Elini fazla bastırma. Ben ne duyduğunu yazmadan sen kendi sesinden ayır."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 53,
+   "zone": 6,
+   "at": [
+    146.0,
+    -3.0
+   ],
+   "model": "disc",
+   "kind": "testguard",
+   "title": "Ölçü kapağı sıçrarken Ekin'i koru",
+   "lines": [
+    [
+     "İlyan",
+     "Püskül yerine kil kapağın kenarı oynadı. Eğitim diskinin gölgesini beklediğim gibi bunu bekleyebilirim. Ekin'in yazısını korumak için eğildiği yöne dön."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 54,
+   "zone": 6,
+   "at": [
+    169.0,
+    6.0
+   ],
+   "model": "wheel",
+   "kind": "testgust",
+   "title": "Çarkın yapışmış kanadını yelle serbest bırak",
+   "lines": [
+    [
+     "Ekin",
+     "Uzansam çarkı kendim çevirmiş olurum. Sonra kâğıda kendi elimin ölçüsünü yazarım. Dün sepete kadar uzanmıştın. Buna yetişebilir misin?"
+    ],
+    [
+     "İlyan",
+     "Bir itiş. Sonra ellerimi arkama koyacağım. Havayı hiç kıpırdatmadan suyun ne yaptığına bakacağız."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 55,
+   "zone": 6,
+   "at": [
+    192.0,
+    -8.0
+   ],
+   "model": "wheel",
+   "kind": "look",
+   "title": "Yel kesildikten sonra çarkı gözle",
+   "lines": [
+    [
+     "Ekin",
+     "Döndü. Okun tersine. Bir dakika; benim de elim değmediğini göstereyim. Bu kuru incir sapını kanala bırakıyorum. Bak, köye gitmiyor."
+    ],
+    [
+     "İlyan",
+     "Birinin suyu tuttuğunu hayal edebilirim. Ama bir el görmekle öyle bir elin var olduğunu düşünmek aynı değil. Gördüğümüzü yazalım."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 56,
+   "zone": 6,
+   "at": [
+    218.0,
+    6.0
+   ],
+   "model": "desk",
+   "kind": "proof",
+   "title": "Mühürlü kayıtla kendi ölçünü karşılaştır",
+   "lines": [
+    [
+     "Ruva",
+     "Bu haftanın teslim levhası. İğdegediği payını almıştır yazıyor. Dün mühürlenmiş. Siz bu sabah ölçtünüz. Hangisini göstereceksiniz?"
+    ],
+    [
+     "Ekin",
+     "Biri bizim suyumuzu çalıyor diye yazmak istedim. Deren sıra uzuyor dedi diye onu hemen suçluya çevirdim. Bana ölçtüğümüzü oku."
+    ]
+   ],
+   "clues": [],
+   "ask": {
+    "correct": 2,
+    "q": "İki tanığın imzalayabileceği cümle hangisi?",
+    "options": [
+     [
+      "Vadigon geri geldi.",
+      "Ruva: Bir adı duymak birini burada görmek değildir."
+     ],
+     [
+      "Köyün hakkını Sarn çaldı.",
+      "Ekin: Mühür sağlam ama basanın suyu çevirdiğini görmedik."
+     ],
+     [
+      "Su iki ölçüde de Avlu'ya döndü; sebep bilinmiyor.",
+      "Ruva: İki kaydı da saklayın. Birini götürmezseniz ötekini uydurduğunuzu söylerler."
+     ]
+    ]
+   }
+  },
+  {
+   "id": 57,
+   "zone": 6,
+   "at": [
+    245.0,
+    -4.0
+   ],
+   "model": "Tamar",
+   "kind": "letter",
+   "title": "Mina'nın cevabını aç",
+   "lines": [
+    [
+     "Tamar",
+     "Hedi nerede olduğunu biliyor. Gitmişsin gibi mühür basmadı. Bunu Mina verdi. O okusun, sen bakma, dedi bana. Astarını açmak ister misin?"
+    ],
+    [
+     "Mina",
+     "Yer adını aldım. Balığın başı bende. Zeytini yedim. Çekirdeğini istersen saklarım."
+    ],
+    [
+     "İlyan",
+     "Yağ izi bir gün yazıyı silecek. Bugün hâlâ mektubun kokması daha iyi. Yer adını gönderdim. Beni nerede soracağını biliyor artık."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 58,
+   "zone": 6,
+   "at": [
+    260.0,
+    5.0
+   ],
+   "model": "desk",
+   "kind": "chart2",
+   "title": "Haritada bildiğin yolu çiz, ötesini boş bırak",
+   "lines": [
+    [
+     "Ekin",
+     "Üçdil'e kadar gördük. Sonra nereye gidiyor diye sorsalar yolun adını biliyoruz, kıvrımlarını bilmiyoruz. Çentikleri birleştir; son mühür nar hattında dursun. Boş yer hata değil."
+    ]
+   ],
+   "clues": []
+  },
+  {
+   "id": 59,
+   "zone": 6,
+   "at": [
+    273.0,
+    0.0
+   ],
+   "model": "Ekin",
+   "kind": "end",
+   "title": "Yarınki seferi birlikte çiz",
+   "lines": [
+    [
+     "Ruva",
+     "İki kaydı götürün. Önce çeşmeyi kullananlara sorun. Sonra mührü basan kapıya gidersiniz. Gözetmen hanesine Tamar yazıldı."
+    ],
+    [
+     "Ekin",
+     "Devamı nerede? Şu nar ağaçlarının ötesinde harita boş kaldı. Kalemi alacak mısın?"
+    ],
+    [
+     "İlyan",
+     "Bilmiyorum. Görünce çizeriz."
+    ]
+   ],
+   "clues": []
+  }
+ ]
+}

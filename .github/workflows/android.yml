@@ -1,0 +1,90 @@
+name: Ashen Vale · Android
+on:
+  workflow_dispatch:
+  push:
+    branches: [arena/719cd1f5-ashen-vale]
+permissions:
+  contents: write
+jobs:
+  episode:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[build:episode1]') || contains(github.event.head_commit.message, '[toolchain:episode1]')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/cache@v5
+        with:
+          path: ~/.cache/ashen-tools/4.4.1
+          key: godot-official-4.4.1-android-v1
+      - run: bash tools/engine.sh
+      - name: Build and verify native Android chapter
+        if: "!contains(github.event.head_commit.message, '[toolchain:episode1]')"
+        run: bash tools/ci-build.sh
+      - name: Stage verified package for offline signing
+        id: handoff
+        if: contains(github.event.head_commit.message, '[build:episode1]')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/signing_transport.py
+      - uses: actions/upload-artifact@v4
+        if: "!contains(github.event.head_commit.message, '[toolchain:episode1]')"
+        with:
+          name: Unsigned-for-offline-signing-${{ steps.handoff.outputs.ref }}
+          path: build/android/*.apk
+          if-no-files-found: error
+      - name: Summarize chapter QA
+        if: always() && !contains(github.event.head_commit.message, '[toolchain:episode1]')
+        id: report
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/qa-report.py
+      - name: Save visual and build evidence
+        if: always() && !contains(github.event.head_commit.message, '[toolchain:episode1]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: Chapter-QA-${{ steps.report.outputs.ref }}
+          path: |
+            build/*.log
+            build/shots/*.png
+          if-no-files-found: ignore
+  device:
+    if: contains(github.event.head_commit.message, '[device:episode1]')
+    needs: episode
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with: {distribution: temurin, java-version: '17'}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: Unsigned-for-offline-signing-*
+          path: build/unsigned
+          merge-multiple: true
+      - name: Install a QA-signed copy on a real Android runtime
+        run: |
+          set -euo pipefail
+          BT=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          PW=$(openssl rand -hex 28); export PW
+          keytool -genkeypair -keystore "$RUNNER_TEMP/qa.p12" -storepass:env PW -alias qa -keyalg RSA -keysize 2048 -dname CN=Temporary-QA -validity 2
+          "$BT/apksigner" sign --ks "$RUNNER_TEMP/qa.p12" --ks-pass env:PW --out build/device-qa.apk build/unsigned/*.apk
+          bash tools/device-smoke.sh build/device-qa.apk
+      - name: Report device results
+        if: always()
+        id: report
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/qa-report.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Device-QA-${{ steps.report.outputs.ref }}
+          path: |
+            build/device/*.log
+            build/shots/android-*.png

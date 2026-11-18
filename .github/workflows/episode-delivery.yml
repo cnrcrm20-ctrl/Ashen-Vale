@@ -1,0 +1,114 @@
+name: Bölüm I · İmzalı Android teslimi
+on:
+  push:
+    branches: [arena/719cd1f5-ashen-vale]
+    paths: [delivery/episode1.json, tools/device-smoke.sh, .github/workflows/episode-delivery.yml]
+permissions: {contents: read}
+jobs:
+  deliver:
+    if: contains(github.event.head_commit.message, '[deliver:episode1]')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions: {actions: read, contents: write}
+    steps:
+      - uses: actions/checkout@v5
+        with: {fetch-depth: 0}
+      - uses: actions/setup-java@v5
+        with: {distribution: temurin, java-version: '17'}
+      - name: Verify source build and one-release scope
+        id: build
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          set -euo pipefail
+          RUN=$(jq -er '.build_run|tonumber' delivery/episode1.json)
+          COMMIT=$(jq -er .source_commit delivery/episode1.json)
+          [[ $(jq -r .tag delivery/episode1.json) == bolum-1-v1.0.0 ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN" > "$RUNNER_TEMP/run.json"
+          jq -e --arg sha "$COMMIT" '.head_sha==$sha and .head_branch=="arena/719cd1f5-ashen-vale" and .status=="completed" and .conclusion=="success"' "$RUNNER_TEMP/run.json"
+          git merge-base --is-ancestor "$COMMIT" "$GITHUB_SHA"
+          echo "run=$RUN" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.build.outputs.run }}
+          pattern: Unsigned-for-offline-signing-*
+          path: build/unsigned
+          merge-multiple: true
+      - name: Verify offline signature and identical game payload
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          exec > >(tee build/delivery.log) 2>&1
+          trap 'echo "::error title=Signed package check::line $LINENO: $BASH_COMMAND"' ERR
+          APK=build/android/Ashen-Vale-Episode-1.apk
+          python3 tools/signature_patch.py apply build/unsigned/*.apk delivery/episode1.sigpatch "$APK"
+          echo "$(jq -r .sha256 delivery/episode1.json)  $APK" | sha256sum -c -
+          BT=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          "$BT/apksigner" verify --verbose --print-certs "$APK" > build/signature.log 2>&1
+          head -26 build/signature.log
+          python3 - <<'PYCODE'
+          import json, re, pathlib
+          s=pathlib.Path('build/signature.log').read_text()
+          certs=set(re.findall(r'(?im)^.*certificate SHA-256 digest:\s*([0-9a-f]{64})\s*$',s))
+          assert {x.lower() for x in certs}=={json.load(open('delivery/episode1.json'))['certificate_sha256']},certs
+          PYCODE
+          "$BT/zipalign" -c -P 16 4 "$APK"
+      - name: Install and play the exact signed package on Android
+        run: timeout -k 10 9m bash tools/device-smoke.sh build/android/Ashen-Vale-Episode-1.apk
+      - name: Summarize device evidence
+        if: always()
+        id: report
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: python3 tools/qa-report.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Signed-Android-QA-${{ steps.report.outputs.ref }}
+          path: |
+            build/*.log
+            build/device/*.log
+            build/shots/*.png
+      - name: Publish only Bölüm I and download it back for verification
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          set -euo pipefail
+          APK=build/android/Ashen-Vale-Episode-1.apk
+          TAG=bolum-1-v1.0.0
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$TAG" "$APK" --repo "$GITHUB_REPOSITORY" --target "$(jq -r .source_commit delivery/episode1.json)" --title 'Ashen Vale · Bölüm I — Üçüncü Zeytin' --notes-file delivery/notes.tr.md
+          fi
+          URL="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/Ashen-Vale-Episode-1.apk"
+          curl -fLsS --retry 4 "$URL" -o "$RUNNER_TEMP/download.apk"
+          echo "$(jq -r .sha256 delivery/episode1.json)  $RUNNER_TEMP/download.apk" | sha256sum -c -
+          echo "::notice::APK indirildi ve SHA-256 doğrulandı: $URL"
+  screencheck:
+    if: contains(github.event.head_commit.message, '[screencheck:episode1]')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions: {contents: write}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with: {distribution: temurin, java-version: '17'}
+      - name: Download the existing public APK, without modifying or publishing anything
+        run: |
+          set -euo pipefail
+          mkdir -p build/android
+          APK=build/android/Ashen-Vale-Episode-1.apk
+          curl -fLsS --retry 3 "https://github.com/$GITHUB_REPOSITORY/releases/download/bolum-1-v1.0.0/Ashen-Vale-Episode-1.apk" -o "$APK"
+          echo "$(jq -r .sha256 delivery/episode1.json)  $APK" | sha256sum -c -
+          python3 -c 'from PIL import Image' || python3 -m pip install pillow
+      - name: Check Android EGL rendering, touch and persistence against Mesa GLES
+        run: LIBGL_ALWAYS_SOFTWARE=1 EMULATOR_GPU=host timeout -k 10 9m xvfb-run -a bash tools/device-smoke.sh build/android/Ashen-Vale-Episode-1.apk
+      - name: Save screen-check evidence
+        if: always()
+        id: report
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: python3 tools/qa-report.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Android-Frames-QA-${{ steps.report.outputs.ref }}
+          path: |
+            build/device/*.log
+            build/shots/android-*.png

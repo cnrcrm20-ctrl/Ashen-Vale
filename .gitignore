@@ -1,0 +1,13 @@
+.godot/
+build/
+dist/
+*.keystore
+*.jks
+*.p12
+*.pk8
+*.key
+.env
+__pycache__/
+
+# Private owner-only Android signing material. Never upload or commit.
+/.signing-private/

@@ -1,0 +1,4 @@
+ASHEN VALE · Birinci Bölüm / Üçüncü Zeytin
+Özgün senaryo: Ashen Vale — episode-1.md. Bölüm dünyası, müzik ve ses tasarımı bu oyun için üretilmiştir. Uzak vadi panoraması ve açılış illüstrasyonu yapay zekâ destekli özgün görseldir; oyun içi görüntü değildir.
+Karakterler, iskelet animasyonları ve seçili eşyalar: Kay Lousberg — KayKit, CC0. Kaynak: github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0 (672074b), KayKit-Dungeon-Remastered-1.0 (b0ca9bd). Seçili yapılar ve bitki örtüsü: KayKit-Medieval-Hexagon-Pack-1.0 (84fa4e91), uyarlanmış renk paleti. Animasyon seti bu bölüm için ayıklanmıştır.
+Godot Engine 4.4.1 (MIT), godotengine.org/license. Yazı: DejaVu, dejavu-fonts.github.io. Tam lisanslar aynı dizindedir. Üçüncü taraf içerikleri kendi lisanslarını korur.
