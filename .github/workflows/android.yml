@@ -11,12 +11,12 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ~/.cache/ashen-tools/4.4.1
           key: godot-official-4.4.1-android-v1
@@ -36,11 +36,17 @@ jobs:
           name: Unsigned-for-offline-signing-${{ steps.handoff.outputs.ref }}
           path: build/android/*.apk
           if-no-files-found: error
+      - name: Summarize chapter QA
+        if: always() && !contains(github.event.head_commit.message, '[toolchain:episode1]')
+        id: report
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/qa-report.py
       - name: Save visual and build evidence
         if: always() && !contains(github.event.head_commit.message, '[toolchain:episode1]')
         uses: actions/upload-artifact@v4
         with:
-          name: Chapter-QA
+          name: Chapter-QA-${{ steps.report.outputs.ref }}
           path: |
             build/*.log
             build/shots/*.png
