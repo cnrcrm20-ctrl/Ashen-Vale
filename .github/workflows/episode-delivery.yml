@@ -54,7 +54,7 @@ jobs:
           PYCODE
           "$BT/zipalign" -c -P 16 4 "$APK"
       - name: Install and play the exact signed package on Android
-        run: bash tools/device-smoke.sh build/android/Ashen-Vale-Episode-1.apk
+        run: timeout -k 10 9m bash tools/device-smoke.sh build/android/Ashen-Vale-Episode-1.apk
       - name: Summarize device evidence
         if: always()
         id: report

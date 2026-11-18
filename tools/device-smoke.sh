@@ -14,14 +14,25 @@ SDKMANAGER=$(command -v sdkmanager || find "$ANDROID_HOME/cmdline-tools" -name s
 adb version; AVD=ashen_api31; printf 'no\n' | "$AVDMANAGER" create avd --force -n "$AVD" -k 'system-images;android-31;default;x86_64' --device pixel_2
 if [[ -e /dev/kvm ]]; then sudo chmod a+rw /dev/kvm; fi
 export ANDROID_SERIAL=emulator-5554; E="$ANDROID_HOME/emulator/emulator"; AVDLOG="$D/emulator.log"
-"$E" @"$AVD" -port 5554 -memory 2048 -cores 2 -no-window -no-snapshot -no-audio -no-boot-anim -gpu swiftshader_indirect -camera-back none -camera-front none >"$AVDLOG" 2>&1 & EMUPID=$!
-finish(){ adb logcat -d -s 'godot:I' 'Godot:I' 'AndroidRuntime:E' >"$D/game.log" 2>&1 || :; tail -50 "$D/game.log" || :; tail -10 "$AVDLOG" || :; adb emu kill >/dev/null 2>&1 || :; kill "$EMUPID" 2>/dev/null || :; }; trap finish EXIT
-if ! timeout 220 bash -c 'adb wait-for-device && until adb shell getprop sys.boot_completed 2>/dev/null | grep -q 1; do sleep 2; done'; then tail -60 "$AVDLOG";exit 1;fi
+adb start-server
+"$E" -version | head -8 || true
+"$E" -accel-check || true
+ls -l /dev/kvm || true
+"$E" @"$AVD" -port 5554 -memory 2048 -cores 2 -no-window -no-snapshot -no-audio -no-boot-anim -gpu swiftshader -feature -Vulkan -camera-back none -camera-front none >"$AVDLOG" 2>&1 & EMUPID=$!
+finish(){ timeout 5 adb logcat -d -s 'godot:I' 'Godot:I' 'AndroidRuntime:E' >"$D/game.log" 2>&1 || :; tail -50 "$D/game.log" || :; tail -35 "$AVDLOG" || :; timeout 4 adb emu kill >/dev/null 2>&1 || :; kill "$EMUPID" 2>/dev/null || :; }; trap finish EXIT
+boot=no
+for n in {1..95}; do
+  if ! kill -0 "$EMUPID" 2>/dev/null; then echo '::error::Android emulator exited during boot'; tail -80 "$AVDLOG";exit 1;fi
+  if [[ $(timeout 3 adb get-state 2>/dev/null || :) == device ]] && [[ $(timeout 3 adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || :) == 1 ]]; then boot=yes;break; fi
+  sleep 2
+done
+[[ $boot == yes ]] || { echo '::error::Android boot timeout';tail -80 "$AVDLOG";exit 1; }
+echo '::notice::AOSP API 31 booted'
 adb shell settings put secure immersive_mode_confirmations confirmed; adb shell wm dismiss-keyguard; adb shell wm size 720x1280; adb shell wm density 240; adb shell input keyevent 82; adb shell settings put system accelerometer_rotation 0
-adb install "$APK"; PK=com.ashenvale.episodeone; ACT=$(adb shell cmd package resolve-activity --brief "$PK" | tail -1 | tr -d '\r'); [[ $ACT == $PK/* ]]
-wait_mark(){ local m=$1; for n in {1..55}; do if adb logcat -d -s 'godot:I' 'Godot:I' | grep -F "$m" >/dev/null; then return 0; fi; sleep 1; done; echo "Missing Android state $m";return 1; }
+timeout 80 adb install "$APK"; PK=com.ashenvale.episodeone; ACT=$(adb shell cmd package resolve-activity --brief "$PK" | tail -1 | tr -d '\r'); [[ $ACT == $PK/* ]]
+wait_mark(){ local m=$1; echo "Waiting for $m"; for n in {1..55}; do if timeout 5 adb logcat -d -s 'godot:I' 'Godot:I' | grep -F "$m" >/dev/null; then return 0; fi; sleep 1; done; echo "Missing Android state $m";return 1; }
 shot(){ adb exec-out screencap -p >"$ROOT/build/shots/android-$1.png"; }
-launch(){ adb logcat -c;adb shell am start -W -n "$ACT"; wait_mark 'AV_READY title';sleep 1; }
+launch(){ adb logcat -c;timeout 35 adb shell am start -W -n "$ACT"; wait_mark 'AV_READY title';sleep 1; }
 launch;shot title
 read -r W H < <(python3 -c 'import struct;print(*struct.unpack(">II",open("build/shots/android-title.png","rb").read()[16:24]))'); [[ $W -gt $H ]]
 tap(){ adb shell input tap "$((W*$1/100))" "$((H*$2/100))"; }
