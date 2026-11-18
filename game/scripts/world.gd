@@ -385,11 +385,9 @@ func terrain():
 					)
 				)
 				st.add_vertex(Vector3(xx, altitude(xx, zz), zz))
-	var m = StandardMaterial3D.new()
-	m.vertex_color_use_as_albedo = true
-	m.vertex_color_is_srgb = true
-	m.cull_mode = BaseMaterial3D.CULL_DISABLED
-	m.roughness = .99
+	var m = ShaderMaterial.new()
+	m.shader = preload("res://shaders/earth.gdshader")
+	m.set_shader_parameter("district", float(zone))
 	var ground = MeshInstance3D.new()
 	ground.mesh = st.commit()
 	ground.material_override = m
@@ -410,7 +408,10 @@ func setup(index: int, beats: Array, quality: bool):
 	sm.ground_horizon_color = sm.sky_horizon_color
 	sm.ground_bottom_color = Color("82918a")
 	sm.sun_angle_max = 9
-	sky.sky_material = sm
+	var panorama = PanoramaSkyMaterial.new()
+	panorama.panorama = preload("res://art/valley_sky.jpg")
+	panorama.energy_multiplier = 0.84 if zone == 4 else 1.0
+	sky.sky_material = panorama
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color("d7dfdc")
@@ -436,12 +437,13 @@ func setup(index: int, beats: Array, quality: bool):
 	water_mat = ShaderMaterial.new()
 	water_mat.shader = WATER
 	terrain()
+	district_art()
 	# An actual encircling skyline, with multiple ranges at different scales/depths.
-	for i in range(100):
-		var a = TAU * i / 100.
+	for i in range(46):
+		var a = TAU * i / 46.
 		var rad = rng.randf_range(350, 476)
 		var pp = Vector3(cos(a) * rad, 0, -length * .5 + sin(a) * rad)
-		var hh = rng.randf_range(38, 93)
+		var hh = rng.randf_range(22, 50)
 		var col = ["#929b98", "#9a9c93", "#8c969b"][i % 3]
 		put(
 			"rock",
@@ -645,12 +647,121 @@ func stage(b: Dictionary):
 		people[b.model].position = target_pos
 
 
-func frame(delta: float, player: Vector3, walking_guide=false):
+func frame(delta: float, player: Vector3, walking_guide = false):
 	clock += delta
 	if ring:
 		ring.scale = Vector3.ONE * (1.0 + sin(clock * 2) * .045)
 	for actor in actors:
-		if walking_guide and actor.title=="Tamar": continue
+		if walking_guide and actor.title == "Tamar":
+			continue
 		if actor.position.distance_squared_to(player) < 42:
 			actor.face(player)
 		actor.motion(0, Vector3.ZERO, delta)
+
+
+func district_art():
+	# Bespoke silhouettes anchor the teaching route; all ornament below shares draw batches.
+	match zone:
+		0:
+			for d in range(0, 75, 7):
+				var p = loc(d, -13.7)
+				arch(p, 2.15, 1.6, true, "#d7c5a5")
+				block(p + Vector3.UP * 4.5, Vector3(3.5, .4, 7.1), "#b39071")
+			for i in range(4):
+				props("bed_decorated", loc(7 + i * 6.4, 11.8), .85, PI * .5)
+			for i in range(3):
+				var p = loc(10, 2) + Vector3(-.24 + i * .16, .88, .02)
+				put("leaf", "#747345", p, Vector3(.15, .077, .10))
+			for d in [30, 68, 99]:
+				arch(loc(d, 0), 3.1, 2.3)
+				props("banner_patternA_red", loc(d, -3.4), .85)
+		1:
+			for d in range(28, 142, 17):
+				var p = loc(d, 0)
+				put(
+					"sheet",
+					["#98603d", "#3f767e", "#9e4e48"][int(d / 17) % 3],
+					p + Vector3.UP * 5.4,
+					Vector3(9, 1, 4),
+					Vector3(.08, 0, .09)
+				)
+				for x in [-5, 5]:
+					beam(p + Vector3(x, 0, 0), p + Vector3(x, 5.9, 0), .22, "#81603f")
+			for i in range(6):
+				props("barrel_large_decorated", loc(22 + i * 17, 11.0), .7 + i % 3 * .1)
+		2:
+			for i in range(3):
+				var p = loc(32 + i * 5.5, -8)
+				put("shaft", "#dcc6a3", p, Vector3(2.2, 4.5 + i * .3, 2.2))
+				props(
+					"banner_patternB_blue" if i == 1 else "banner_patternA_red",
+					p + Vector3(0, .7, .23),
+					1.15
+				)
+			for i in range(8):
+				put(
+					"pot",
+					"#bd7f58",
+					loc(93 + i * 2.8, 12 + (i % 2) * 2),
+					Vector3.ONE * (1. + i % 3 * .47)
+				)
+			for i in range(14):
+				var p = loc(145 + i * 5, 30)
+				tree(p, 4.5)
+				put("leaf", "#b65343", p + Vector3(.45, 3.2, .23), Vector3(.34, .35, .36))
+		3, 4:
+			for row in range(3):
+				var p = loc(20 + row * 89, 0)
+				arch(p, 3.2, 3.4)
+				block(p + Vector3.UP * 7.55, Vector3(10, .48, 2.2), "#caaa81")
+				props("banner_patternB_blue", p + Vector3(-3.9, 1.4, .41), 1.13)
+			for i in range(5):
+				props("shelf_large", loc(60 + i * 4.6, 13.3), .8, PI * .5)
+				props("chair", loc(105 + i * 4.2, -11.2), .76)
+			for i in range(12):
+				put("pot", "#b37b53", loc(35 + i * 4, 10.4), Vector3(.6, .75, .6))
+		5:
+			for d in [27, 116, 170]:
+				var p = loc(d, -3)
+				for i in range(13):
+					var a = PI * .08 + i * PI * .84 / 12
+					for k in range(3):
+						var pt = (
+							p
+							+ Vector3(
+								cos(a) * (12 + k * 1.4), .28 * (k + 1), -sin(a) * (12 + k * 1.4)
+							)
+						)
+						put(
+							"box",
+							"#d5bd97",
+							pt,
+							Vector3(.95, .45 * (k + 1), 2.5 + k * .22),
+							Vector3(0, a, 0)
+						)
+				for i in range(8):
+					var a = i * TAU / 8
+					var pt = p + Vector3(cos(a) * 4, .03, sin(a) * 4)
+					put("rock", "#9d805f", pt, Vector3(1.15, .12, .58), Vector3(0, -a, 0))
+		6:
+			for d in range(30, 201, 10):
+				var p = loc(d, 0)
+				arch(p, 4.05, 2.7)
+				block(p + Vector3.UP * 7.92, Vector3(10.5, .55, 2.1), "#ada28c")
+				for x in [-8.5, 8.5]:
+					put(
+						"rod",
+						"#b17e53",
+						loc(d, x) + Vector3.UP * .36,
+						Vector3(1.05, 9.6, 1.05),
+						Vector3(PI / 2, 0, 0)
+					)
+	for i in range(25):
+		var p = loc(rng.randf_range(1, length), rng.randf_range(14, 21) * (-1 if i % 2 else 1))
+		put(
+			"pot",
+			["#ad7251", "#c58c63", "#b5a17c"][i % 3],
+			p,
+			Vector3.ONE * rng.randf_range(.6, 1.45)
+		)
+		put("rod", "#785941", p + Vector3.UP * .12, Vector3(.8, .11, .8))

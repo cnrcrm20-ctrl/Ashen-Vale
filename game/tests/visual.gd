@@ -26,4 +26,12 @@ func run():
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png(path + "/scene-" + str(j) + ".png")
 	print("VISUAL_SMOKE PASS")
+	g.audio.music.stop()
+	for stream in g.audio.pool:
+		stream.stop()
+	g.queue_free()
+	g = null
+	for i in range(12):
+		await process_frame
+	await create_timer(.35).timeout
 	quit()
