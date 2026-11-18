@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Install exactly the file supplied; a release test must never re-sign it.
 set -euo pipefail
+export PATH="${ANDROID_HOME:?}/platform-tools:$ANDROID_HOME/emulator:$PATH"
 APK=$(realpath "${1:?path to signed APK}"); export APK; ROOT=$(pwd); D=$ROOT/build/device; export D
 mkdir -p "$D" "$ROOT/build/shots"; exec > >(tee "$D/test.log") 2>&1
 BT=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
@@ -9,8 +10,8 @@ SDKMANAGER=$(command -v sdkmanager || find "$ANDROID_HOME/cmdline-tools" -name s
 # AOSP image, no Play services and no account. Only sdkmanager's status is relevant
 # when yes exits on the closed input pipe.
 (set +o pipefail; yes | "$SDKMANAGER" --licenses >"$D/licenses.log" 2>&1)
-"$SDKMANAGER" 'emulator' 'system-images;android-31;default;x86_64'  >"$D/sdk.log" 2>&1 || { tail -30 "$D/sdk.log";exit 1; }
-AVD=ashen_api31; printf 'no\n' | "$AVDMANAGER" create avd --force -n "$AVD" -k 'system-images;android-31;default;x86_64' --device pixel_2
+"$SDKMANAGER" 'platform-tools' 'emulator' 'system-images;android-31;default;x86_64'  >"$D/sdk.log" 2>&1 || { tail -30 "$D/sdk.log";exit 1; }
+adb version; AVD=ashen_api31; printf 'no\n' | "$AVDMANAGER" create avd --force -n "$AVD" -k 'system-images;android-31;default;x86_64' --device pixel_2
 if [[ -e /dev/kvm ]]; then sudo chmod a+rw /dev/kvm; fi
 export ANDROID_SERIAL=emulator-5554; E="$ANDROID_HOME/emulator/emulator"; AVDLOG="$D/emulator.log"
 "$E" @"$AVD" -port 5554 -memory 2048 -cores 2 -no-window -no-snapshot -no-audio -no-boot-anim -gpu swiftshader_indirect -camera-back none -camera-front none >"$AVDLOG" 2>&1 & EMUPID=$!
