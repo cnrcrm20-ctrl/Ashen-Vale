@@ -8,3 +8,6 @@ dist/
 *.key
 .env
 __pycache__/
+
+# Private owner-only Android signing material. Never upload or commit.
+/.signing-private/
