@@ -50,7 +50,7 @@ func make(person: String):
 			if animator.has_animation(clip):
 				animator.get_animation(clip).loop_mode = Animation.LOOP_LINEAR
 		play("Idle")
-		animator.seek(fmod(person.hash() * 0.01, 1.0), true)
+		animator.seek(fposmod(person.hash() * 0.01, 1.0), true)
 	if person == "İlyan":
 		var skins = rig.find_children("*", "Skeleton3D", true, false)
 		if skins.size():
@@ -79,7 +79,8 @@ func play(clip: String, speed = 1.0, force = false):
 	if animator == null or not animator.has_animation(clip):
 		return
 	if force or last_clip != clip:
-		animator.play(clip, 0.16, speed)
+		animator.speed_scale = speed
+		animator.play(clip, 0.16, 1.0)
 		last_clip = clip
 	else:
 		animator.speed_scale = speed

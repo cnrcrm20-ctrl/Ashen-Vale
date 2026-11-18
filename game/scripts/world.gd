@@ -238,7 +238,7 @@ func put(shape: String, col: String, pos: Vector3, sz: Vector3, rot = Vector3.ZE
 	var key = shape + ":" + col
 	if not batches.has(key):
 		batches[key] = []
-	batches[key].append(Transform3D(Basis.from_euler(rot).scaled_local(sz), pos))
+	batches[key].append(Transform3D(Basis.from_euler(rot) * Basis.from_scale(sz), pos))
 
 
 func block(p: Vector3, s: Vector3, c: String):
@@ -622,7 +622,7 @@ func landmark(kind: String, p: Vector3):
 			props("chest", p, .95)
 		"pipe", "wheel":
 			basin(p, 1.35)
-			arch(p + Vector3(0, 0, -.85), 1.18, 1.35, "" != "", "#b29d7d")
+			arch(p + Vector3(0, 0, -.85), 1.18, 1.35, false, "#b29d7d")
 			put(
 				"rod",
 				"#ac7957",

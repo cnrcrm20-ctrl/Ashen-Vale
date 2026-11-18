@@ -11,7 +11,7 @@ mkdir -p "$HOME/.config/godot"; cat > "$HOME/.config/godot/editor_settings-4.4.t
 export/android/android_sdk_path = "${ANDROID_HOME:?Android SDK required}"
 export/android/java_sdk_path = "${JAVA_HOME:?JDK required}"
 SETTINGS
-"$GODOT" --headless --path game --editor --import >build/import.log 2>&1 || { tail -120 build/import.log; exit 1; }
+LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a "$GODOT" --audio-driver Dummy --rendering-method gl_compatibility --path game --editor --import >build/import.log 2>&1 || { tail -120 build/import.log; exit 1; }
 if grep -E 'SCRIPT ERROR:|Parse Error:|Compile Error:|^ERROR:' build/import.log; then exit 1; fi
 timeout 120 "$GODOT" --headless --path game --script res://tests/chapter_test.gd 2>&1 | tee build/smoke.log
 if grep -E 'SCRIPT ERROR:|^ERROR:' build/smoke.log; then exit 1; fi
