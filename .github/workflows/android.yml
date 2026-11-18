@@ -4,7 +4,7 @@ on:
   push:
     branches: [arena/719cd1f5-ashen-vale]
 permissions:
-  contents: read
+  contents: write
 jobs:
   episode:
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[build:episode1]') || contains(github.event.head_commit.message, '[toolchain:episode1]')
@@ -24,9 +24,24 @@ jobs:
       - name: Build and verify native Android chapter
         if: "!contains(github.event.head_commit.message, '[toolchain:episode1]')"
         run: bash tools/ci-build.sh
+      - name: Stage verified package for offline signing
+        id: handoff
+        if: contains(github.event.head_commit.message, '[build:episode1]')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/signing_transport.py
       - uses: actions/upload-artifact@v4
         if: "!contains(github.event.head_commit.message, '[toolchain:episode1]')"
         with:
-          name: Ashen-Vale-Episode-1
+          name: Unsigned-for-offline-signing-${{ steps.handoff.outputs.ref }}
           path: build/android/*.apk
           if-no-files-found: error
+      - name: Save visual and build evidence
+        if: always() && !contains(github.event.head_commit.message, '[toolchain:episode1]')
+        uses: actions/upload-artifact@v4
+        with:
+          name: Chapter-QA
+          path: |
+            build/*.log
+            build/shots/*.png
+          if-no-files-found: ignore
