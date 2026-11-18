@@ -1,0 +1,10 @@
+.godot/
+build/
+dist/
+*.keystore
+*.jks
+*.p12
+*.pk8
+*.key
+.env
+__pycache__/

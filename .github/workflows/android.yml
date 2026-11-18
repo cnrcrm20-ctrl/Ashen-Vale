@@ -7,7 +7,7 @@ permissions:
   contents: read
 jobs:
   episode:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[build:episode1]')
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[build:episode1]') || contains(github.event.head_commit.message, '[toolchain:episode1]')
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
@@ -16,9 +16,16 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ashen-tools/4.4.1
+          key: godot-official-4.4.1-android-v1
+      - run: bash tools/engine.sh
       - name: Build and verify native Android chapter
+        if: "!contains(github.event.head_commit.message, '[toolchain:episode1]')"
         run: bash tools/ci-build.sh
       - uses: actions/upload-artifact@v4
+        if: "!contains(github.event.head_commit.message, '[toolchain:episode1]')"
         with:
           name: Ashen-Vale-Episode-1
           path: build/android/*.apk
