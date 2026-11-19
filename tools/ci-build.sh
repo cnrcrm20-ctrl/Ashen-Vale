@@ -31,8 +31,11 @@ timeout 150 "$GODOT" --headless --path game --script res://tests/chapter_test.gd
 if grep -E 'SCRIPT ERROR:|SHADER ERROR:|Program linking failed|^ERROR:' build/smoke.log; then exit 1; fi
 grep -q 'CHAPTER_SMOKE PASS' build/smoke.log
 if command -v xvfb-run >/dev/null; then
-  LIBGL_ALWAYS_SOFTWARE=1 timeout 240 xvfb-run -a "$GODOT" --path game --audio-driver Dummy --rendering-method gl_compatibility --resolution 1280x720 --fixed-fps 24 --script res://tests/visual.gd 2>&1 | tee build/visual.log
-  grep -q 'VISUAL_SMOKE PASS' build/visual.log
+  # llvmpipe renders full 720p shadow maps and skinned close-ups on CPU.
+  # Keep all eleven production frames and the fatal error/visibility gates.
+  LIBGL_ALWAYS_SOFTWARE=1 timeout -k 15 18m xvfb-run -a "$GODOT" --path game --audio-driver Dummy --rendering-method gl_compatibility --resolution 1280x720 --fixed-fps 24 --script res://tests/visual.gd 2>&1 | tee build/visual.log
+  grep -qx 'VISUAL_SMOKE PASS' build/visual.log
+  test "$(grep -c '^FRAME ' build/visual.log)" = 11
   if grep -E 'SCRIPT ERROR:|SHADER ERROR:|Program linking failed|^ERROR:' build/visual.log; then exit 1; fi
 fi
 "$GODOT" --headless --path game --export-release Android "$OUT/episode1-unsigned.apk" >build/export.log 2>&1 || { tail -80 build/export.log; exit 1; }
