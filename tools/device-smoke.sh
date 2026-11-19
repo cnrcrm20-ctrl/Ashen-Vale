@@ -41,7 +41,19 @@ adb shell settings put secure immersive_mode_confirmations confirmed; adb shell 
 # Keep historical 1.0.0 testable but never install an unrelated application.
 PK=$("$BT/aapt" dump badging "$APK" | sed -n "s/^package: name='\([^']*\)'.*/\1/p")
 case "$PK" in com.ashenvale.episodeone|com.ashenvale.episodeone.preview) ;; *) echo 'Unexpected application ID'; exit 1;; esac
-timeout 80 adb install "$APK"; ACT=$(adb shell cmd package resolve-activity --brief "$PK" | tail -1 | tr -d '\r'); [[ $ACT == $PK/* ]]
+if [[ -n ${ASHEN_STABLE_REFERENCE:-} ]]; then
+  [[ "$PK" == com.ashenvale.episodeone.preview ]]
+  echo "$(python3 -c 'import json; print(json.load(open("delivery/episode1.json"))["sha256"])')  $ASHEN_STABLE_REFERENCE" | sha256sum -c -
+  timeout 80 adb install "$ASHEN_STABLE_REFERENCE"
+fi
+timeout 80 adb install "$APK"
+if [[ -n ${ASHEN_STABLE_REFERENCE:-} ]]; then
+  uid_for(){ adb shell pm list packages -U --user 0 "$1" | tr -d '\r' | awk -v pkg="package:$1" '$1==pkg {sub(/^uid:/,"",$2); print $2}'; }
+  stable_uid=$(uid_for com.ashenvale.episodeone); preview_uid=$(uid_for "$PK")
+  [[ $stable_uid =~ ^[0-9]+$ && $preview_uid =~ ^[0-9]+$ && $stable_uid != "$preview_uid" ]]
+  echo 'ANDROID_PARALLEL_INSTALL PASS · isolated stable and preview application IDs and UIDs'
+fi
+ACT=$(adb shell cmd package resolve-activity --brief "$PK" | tail -1 | tr -d '\r'); [[ $ACT == $PK/* ]]
 wait_mark(){ local m=$1; echo "Waiting for $m"; for n in {1..55}; do if timeout 5 adb logcat -d -s 'godot:I' 'Godot:I' | grep -F "$m" >/dev/null; then return 0; fi; sleep 1; done; echo "Missing Android state $m";return 1; }
 shot(){ adb exec-out screencap -p >"$ROOT/build/shots/android-$1.png"; }
 launch(){ adb logcat -c;timeout 35 adb shell am start -W -n "$ACT"; wait_mark 'AV_READY title';sleep 1; }
@@ -66,5 +78,5 @@ adb shell input swipe "$((W*11/100))" "$((H*81/100))" "$((W*14/100))" "$((H*58/1
 adb logcat -d -s "godot:I" "Godot:I" >"$D/first-launch.log";adb shell input keyevent 3;sleep 1;adb shell am force-stop "$PK";launch;tap 17 61;wait_mark 'AV_BEAT 1'; wait_mark 'AV_WALK';adb shell pidof "$PK";shot resumed
 adb logcat -d -s 'godot:I' 'Godot:I' >"$D/resume.log"
 python3 tools/check-android-frames.py "$ROOT/build/shots" | tee "$D/frames.log"
-if grep -E 'Program linking failed|SHADER ERROR|SCRIPT ERROR:|FATAL EXCEPTION' "$D/first-launch.log" "$D/resume.log";then echo '::error::Android shader or script failure';exit 1;fi
+if grep -E 'Program linking failed|SHADER ERROR|SCRIPT ERROR:|FATAL EXCEPTION|Failed loading resource: res://|No loader found for resource: res://' "$D/first-launch.log" "$D/resume.log";then echo '::error::Android shader, script or packaged resource failure';exit 1;fi
 echo 'ANDROID_SMOKE PASS · signed install / title / settings / walk / touch dialogue / movement / process death / resume'

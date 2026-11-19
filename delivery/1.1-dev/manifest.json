@@ -1,0 +1,14 @@
+{
+  "tag": "bolum-1-v1.1-dev",
+  "package": "com.ashenvale.episodeone.preview",
+  "version": "1.1-dev",
+  "version_code": 10002,
+  "build_run": 44445933317,
+  "source_commit": "6d58cf28399e476760372bbb4de14bcd9a44e80b",
+  "unsigned_sha256": "9421358d504485e3fb23d8d6c19988343dfda85e1c03c2993c75c945c21d8225",
+  "sha256": "87963ad092d0de092a9304519bfee4116e5f93baf443a481b9d44c820efc18f7",
+  "bytes": 214158303,
+  "certificate_sha256": "e9e1bf08291e67e014597137dd01fec7abf2cebc183c7792eb151408d910be29",
+  "video_sha256": "43cf3858850f5af8d883ffe57aed2cba261a79c8a3260cb6e88a45368ed04fdf",
+  "video_bytes": 5012595
+}

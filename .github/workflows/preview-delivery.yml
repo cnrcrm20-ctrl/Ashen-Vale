@@ -77,7 +77,8 @@ jobs:
           bt=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
           "$bt/apksigner" verify --verbose --print-certs "$APK" | tee build/signature.log
           grep -Fqx 'Number of signers: 1' build/signature.log
-          grep -Fqx "Signer #1 certificate SHA-256 digest: $(jq -r .certificate_sha256 "$M")" build/signature.log
+          certs=$(sed -nE 's/^.*certificate SHA-256 digest: ([0-9a-fA-F]{64})$/\1/p' build/signature.log | tr A-F a-f | sort -u)
+          test "$certs" = "$(jq -r .certificate_sha256 "$M")"
           test "$(jq -r .certificate_sha256 "$M")" != "$(jq -r .certificate_sha256 delivery/episode1.json)"
           grep -Fqx 'Verified using v2 scheme (APK Signature Scheme v2): true' build/signature.log
           "$bt/zipalign" -c -P 16 4 "$APK"
@@ -87,6 +88,11 @@ jobs:
       - name: Open, play and resume this exact signed package on Android
         run: |
           python3 -c 'from PIL import Image' || python3 -m pip install pillow
+          # Exercise the promised side-by-side install on a disposable AVD,
+          # not on a user's phone. The stable artifact itself is never modified.
+          export ASHEN_STABLE_REFERENCE="$RUNNER_TEMP/stable.apk"
+          curl -fLsS --retry 3 "https://github.com/$GITHUB_REPOSITORY/releases/download/bolum-1-v1.0.0/Ashen-Vale-Episode-1.apk" -o "$ASHEN_STABLE_REFERENCE"
+          echo "$(jq -r .sha256 delivery/episode1.json)  $ASHEN_STABLE_REFERENCE" | sha256sum -c -
           LIBGL_ALWAYS_SOFTWARE=1 EMULATOR_GPU=host timeout -k 10 12m xvfb-run -a bash tools/device-smoke.sh "$APK"
       - name: Save diagnostic frames and install evidence
         if: always()
