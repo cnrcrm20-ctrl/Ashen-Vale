@@ -27,12 +27,11 @@ adb start-server
 "$E" -version | head -8 || true
 "$E" -accel-check || true
 ls -l /dev/kvm || true
-# Historical 1.0.0 is GLES. For the Vulkan preview exercise the actual
-# Mobile renderer on a Vulkan-enabled AVD instead of advertising hardware
-# that was deliberately disabled by the old emulator command line.
+# Select the emulator's hardware profile, not the app's renderer; both APKs
+# are launched normally. Use the GLES-only device unless explicitly requested.
 vk_feature=-Vulkan
 if [[ ${EMULATOR_VULKAN:-off} == on ]]; then vk_feature=Vulkan; fi
-"$E" @"$AVD" -port 5554 -memory 2048 -cores 2 -no-window -no-snapshot -no-audio -no-boot-anim -gpu "${EMULATOR_GPU:-host}" -feature -Vulkan -camera-back none -camera-front none >"$AVDLOG" 2>&1 & EMUPID=$!
+"$E" @"$AVD" -port 5554 -memory 2048 -cores 2 -no-window -no-snapshot -no-audio -no-boot-anim -gpu "${EMULATOR_GPU:-host}" -feature "$vk_feature" -camera-back none -camera-front none >"$AVDLOG" 2>&1 & EMUPID=$!
 finish(){ timeout 5 adb logcat -d -s 'godot:I' 'Godot:I' 'AndroidRuntime:E' >"$D/game.log" 2>&1 || :; tail -50 "$D/game.log" || :; tail -35 "$AVDLOG" || :; timeout 4 adb emu kill >/dev/null 2>&1 || :; kill "$EMUPID" 2>/dev/null || :; }; trap finish EXIT
 boot=no
 for n in {1..95}; do

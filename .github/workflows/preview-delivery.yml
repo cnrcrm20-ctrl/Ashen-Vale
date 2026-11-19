@@ -56,7 +56,7 @@ jobs:
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run" > "$RUNNER_TEMP/source.json"
           jq -e --arg sha "$source" --arg branch "$GITHUB_REF_NAME" '.head_sha==$sha and .head_branch==$branch and .path==".github/workflows/android.yml" and .status=="completed" and .conclusion=="success"' "$RUNNER_TEMP/source.json"
           git merge-base --is-ancestor "$source" "$GITHUB_SHA"
-          git diff --exit-code "$source" "$GITHUB_SHA" -- game story "$MP4"
+          git diff --exit-code "$source" "$GITHUB_SHA" -- game story android/preview tools/preview-template.sh "$MP4"
           echo "run=$run" >> "$GITHUB_OUTPUT"
       - uses: actions/download-artifact@v4
         with:
