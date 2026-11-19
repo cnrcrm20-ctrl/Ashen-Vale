@@ -1,0 +1,106 @@
+name: Bölüm I · 1.1-dev ön sürüm
+on:
+  push:
+    branches: [arena/f502d2c5-ashen-vale]
+    paths:
+      - '.github/workflows/preview-delivery.yml'
+      - 'delivery/1.1-dev/**'
+      - 'tools/publish-preview.sh'
+      - 'tools/device-smoke.sh'
+permissions: {contents: read}
+jobs:
+  sdk:
+    if: contains(github.event.head_commit.message, '[sdk:1.1-dev]')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {contents: write}
+    steps:
+      - name: Provide the public Android SDK verifier for offline signing (no keys)
+        id: sdk
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          set -euo pipefail
+          bt=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          jar="$bt/lib/apksigner.jar"
+          ref=$(base64 -w0 "$jar" | jq -Rs '{encoding:"base64",content:.}' | gh api "repos/$GITHUB_REPOSITORY/git/blobs" -X POST --input - --jq .sha)
+          test "$ref" = "$(git hash-object "$jar")"
+          java -jar "$jar" version
+          sha256sum "$jar" > "$RUNNER_TEMP/sdk.txt"; cat "$RUNNER_TEMP/sdk.txt"
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Public-SDK-apksigner-${{ steps.sdk.outputs.ref }}
+          path: ${{ runner.temp }}/sdk.txt
+  deliver:
+    if: contains(github.event.head_commit.message, '[deliver:1.1-dev]')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions: {actions: read, contents: write}
+    env:
+      M: delivery/1.1-dev/manifest.json
+      APK: build/preview/Ashen-Vale-1.1-dev-Android.apk
+      MP4: samples/kalkstein-diyalog.mp4
+    steps:
+      - uses: actions/checkout@v5
+        with: {fetch-depth: 0}
+      - uses: actions/setup-java@v5
+        with: {distribution: temurin, java-version: '17'}
+      - name: Check the source and exact scope of this delivery
+        id: source
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          set -euo pipefail
+          jq -e '.tag=="bolum-1-v1.1-dev" and .package=="com.ashenvale.episodeone.preview" and .version=="1.1-dev" and .version_code==10002' "$M"
+          source=$(jq -er .source_commit "$M"); run=$(jq -er '.build_run|tonumber' "$M")
+          [[ $source =~ ^[0-9a-f]{40}$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run" > "$RUNNER_TEMP/source.json"
+          jq -e --arg sha "$source" --arg branch "$GITHUB_REF_NAME" '.head_sha==$sha and .head_branch==$branch and .path==".github/workflows/android.yml" and .status=="completed" and .conclusion=="success"' "$RUNNER_TEMP/source.json"
+          git merge-base --is-ancestor "$source" "$GITHUB_SHA"
+          git diff --exit-code "$source" "$GITHUB_SHA" -- game story "$MP4"
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.source.outputs.run }}
+          pattern: Unsigned-for-offline-signing-*
+          path: build/unsigned
+          merge-multiple: true
+      - name: Recreate the exact offline-signed APK and verify both assets
+        run: |
+          set -euo pipefail
+          base=build/unsigned/Ashen-Vale-Episode-1.apk
+          echo "$(jq -r .unsigned_sha256 "$M")  $base" | sha256sum -c -
+          python3 tools/signature_patch.py apply "$base" delivery/1.1-dev/preview.sigpatch "$APK"
+          echo "$(jq -r .sha256 "$M")  $APK" | sha256sum -c -
+          echo "$(jq -r .video_sha256 "$M")  $MP4" | sha256sum -c -
+          test "$(stat -c%s "$APK")" = "$(jq -r .bytes "$M")"
+          bt=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          "$bt/apksigner" verify --verbose --print-certs "$APK" | tee build/signature.log
+          grep -Fqx 'Number of signers: 1' build/signature.log
+          grep -Fqx "Signer #1 certificate SHA-256 digest: $(jq -r .certificate_sha256 "$M")" build/signature.log
+          test "$(jq -r .certificate_sha256 "$M")" != "$(jq -r .certificate_sha256 delivery/episode1.json)"
+          grep -Fqx 'Verified using v2 scheme (APK Signature Scheme v2): true' build/signature.log
+          "$bt/zipalign" -c -P 16 4 "$APK"
+          "$bt/aapt" dump badging "$APK" > build/badging.log
+          grep -Fq "package: name='com.ashenvale.episodeone.preview' versionCode='10002' versionName='1.1-dev'" build/badging.log
+          if grep -Fq 'android.permission.INTERNET' build/badging.log; then exit 1; fi
+      - name: Open, play and resume this exact signed package on Android
+        run: |
+          python3 -c 'from PIL import Image' || python3 -m pip install pillow
+          LIBGL_ALWAYS_SOFTWARE=1 EMULATOR_GPU=host timeout -k 10 12m xvfb-run -a bash tools/device-smoke.sh "$APK"
+      - name: Save diagnostic frames and install evidence
+        if: always()
+        id: report
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: python3 tools/qa-report.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Preview-Android-QA-${{ steps.report.outputs.ref }}
+          path: |
+            build/*.log
+            build/device/*.log
+            build/shots/android-*.png
+      - name: Publish the APK and MP4 together, leaving 1.0.0 untouched
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: bash tools/publish-preview.sh
