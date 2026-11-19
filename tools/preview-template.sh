@@ -12,6 +12,13 @@ fi
 mkdir -p "$out"; touch "$root/.ashen-preview-template" "$root/.gdignore" "$out/.gdignore"
 printf '%s\n' "$version" > "$root/.build_version"
 unzip -oq "$template" -d "$out"; chmod +x "$out/gradlew"
+# Hosted shared runner IPs can hit Maven Central's HTTP 429. Google's public
+# mirror contains the same Central coordinates; retain the upstream repos for
+# Android/Gradle artifacts and cache only tools/dependencies, never the APK.
+for cfg in "$out/settings.gradle" "$out/build.gradle"; do
+  grep -q '^[[:space:]]*mavenCentral()' "$cfg"
+  sed -i '/^[[:space:]]*mavenCentral()/i\        maven { url "https://maven-central.storage-download.googleapis.com/maven2/" }' "$cfg"
+done
 java_dir="$out/src/com/godot/game"
 install -m644 android/preview/PreviewGraphics.java "$java_dir/PreviewGraphics.java"
 # Retain the official activity, splash screen and license. Add only the host hook.
