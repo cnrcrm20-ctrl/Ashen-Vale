@@ -1,5 +1,7 @@
 # Ashen Vale — 3. Zeytin
 
+**[Android APK indir · 85,2 MB](https://github.com/cnrcrm20-ctrl/Ashen-Vale/releases/download/bolum-1-v1.1-dev/Ashen-Vale-1.1-dev-Android.apk)** · **[Kalkstein diyalog videosunu indir · 10,3 sn](https://github.com/cnrcrm20-ctrl/Ashen-Vale/releases/download/bolum-1-v1.1-dev/kalkstein-diyalog.mp4)** · [1.1-dev ön sürüm notları ve SHA-256 özetleri](https://github.com/cnrcrm20-ctrl/Ashen-Vale/releases/tag/bolum-1-v1.1-dev)
+
 **1.1-dev · Android önizlemesi.** Lyander gecenin içinde, Kalkstein Yetimhanesi'nde başlar. Lyra'nın sesini bulur, iskele kâtibiyle Matilda'yı duyar; mutfak ve kiler iki ayrı çıkış sunar. Türkçe dublajın ilk oturumu **4 rol, 10 kayıt**: [Kalkstein gecesinden 25 saniye dinle](samples/kalkstein-gecesi.mp3). Bunlar oyundaki kliplerden montajdır. Kalan konuşmalar geçici olarak altyazılıdır; harici ses modeli veya telefonda TTS gerekmez. [Proje hafızası](braind.md) · [oynanabilir metin](story/episode1.av) · [roman](episode-1.md).
 
 **[Lyra ile Lyander'i yatakhanede izle · 10,3 sn MP4](samples/kalkstein-diyalog.mp4)** — «Üçüncü zeytin» konuşmasının kesintisiz Godot kaydı. Kamera, Türkçe altyazı ve ses oyun içinde çalışıyor. 1280×720 / 24 kare/sn film çıktısıdır; telefondan alınmadı ve FPS ölçümü değildir. [Sahne varlıkları ve ses kaynakları](game/licenses/Credits.txt).
