@@ -88,8 +88,14 @@ adb logcat -d -s "godot:I" "Godot:I" >"$D/first-launch.log";adb shell input keye
 adb logcat -d -s 'godot:I' 'Godot:I' >"$D/resume.log"
 python3 tools/check-android-frames.py "$ROOT/build/shots" | tee "$D/frames.log"
 if grep -E 'Program linking failed|SHADER ERROR|SCRIPT ERROR:|FATAL EXCEPTION|Failed loading resource: res://|No loader found for resource: res://' "$D/first-launch.log" "$D/resume.log";then echo '::error::Android shader, script or packaged resource failure';exit 1;fi
-if [[ $vk_feature == Vulkan ]]; then
-  grep -Ei 'Vulkan [0-9].*Mobile' "$D/first-launch.log"
-  echo 'ANDROID_MOBILE_RENDERER PASS'
+if [[ $PK == com.ashenvale.episodeone.preview ]]; then
+  if grep -Fq 'AV_GRAPHICS startup=gles3' "$D/first-launch.log"; then
+    grep -E 'OpenGL API .*3[.][0-9].*Compatibility - Using Device: .*[[:alnum:]]' "$D/first-launch.log"
+    echo 'ANDROID_RENDERER PASS · GLES3 selected before surface creation'
+  else
+    grep -Fq 'AV_GRAPHICS startup=vulkan-mobile' "$D/first-launch.log"
+    grep -Ei 'Vulkan [0-9].*Mobile' "$D/first-launch.log"
+    echo 'ANDROID_RENDERER PASS · Vulkan Mobile with an accessible device'
+  fi
 fi
 echo 'ANDROID_SMOKE PASS · signed install / title / settings / walk / touch dialogue / movement / process death / resume'

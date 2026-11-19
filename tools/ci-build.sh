@@ -23,9 +23,8 @@ if re.search(r'^ERROR:|SCRIPT ERROR:|Parse Error:|Compile Error:',s,re.M):raise 
 CHECK
 # Let Google's resource compiler type the Vulkan feature attributes. The 4.4.1
 # non-Gradle binary-template exporter emits android:required as a string.
-install_template=()
-if [[ ! -e game/android/.build_version ]]; then install_template=(--install-android-build-template); fi
-"$GODOT" --headless --path game "${install_template[@]}" --export-release Android "$OUT/episode1-unsigned.apk" >build/export.log 2>&1 || { tail -80 build/export.log; exit 1; }
+bash tools/preview-template.sh
+"$GODOT" --headless --path game --export-release Android "$OUT/episode1-unsigned.apk" >build/export.log 2>&1 || { tail -80 build/export.log; exit 1; }
 BT=$(find "$ANDROID_HOME/build-tools" -maxdepth 1 -mindepth 1 -type d | sort -V | tail -1)
 "$BT/zipalign" -f -P 16 4 "$OUT/episode1-unsigned.apk" "$OUT/Ashen-Vale-Episode-1.apk"; rm "$OUT/episode1-unsigned.apk"
 "$BT/zipalign" -c -P 16 4 "$OUT/Ashen-Vale-Episode-1.apk"
@@ -34,6 +33,16 @@ if grep -q "android.permission.INTERNET" build/badging.log; then exit 1; fi
 grep -q "native-code:.*arm64-v8a.*x86_64" build/badging.log
 grep -q ^launchable-activity build/badging.log
 cat build/badging.log; grep -Fq "package: name='com.ashenvale.episodeone.preview' versionCode='10002' versionName='1.1-dev'" build/badging.log
+grep -Fq "uses-feature-not-required: name='android.hardware.vulkan.version'" build/badging.log
+python3 - "$OUT/Ashen-Vale-Episode-1.apk" <<'APK_CHECK'
+import sys, zipfile
+with zipfile.ZipFile(sys.argv[1]) as z:
+    for abi in ('arm64-v8a', 'x86_64'):
+        assert z.getinfo(f'lib/{abi}/libashen_gpu.so').file_size > 0
+    for name in ('art/pbr/stone_color.jpg', 'art/pbr/cobble_normal.jpg', 'art/pbr/brook_ripples.png'):
+        assert b'path.etc2=' in z.read(f'assets/{name}.import'), f'Missing baseline mobile format: {name}'
+print('ANDROID_PROFILE_PACKAGE PASS · two native probes and ETC2 maps')
+APK_CHECK
 unzip -tq "$OUT/Ashen-Vale-Episode-1.apk" >/dev/null
 sha256sum "$OUT/Ashen-Vale-Episode-1.apk"
 

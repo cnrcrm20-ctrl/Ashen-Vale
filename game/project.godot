@@ -32,7 +32,7 @@ window/vsync/vsync_mode=0
 [importer_defaults]
 
 texture={
-"compress/high_quality": true,
+"compress/high_quality": false,
 "compress/mode": 2,
 "mipmaps/generate": true
 }

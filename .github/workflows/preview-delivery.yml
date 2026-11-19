@@ -96,9 +96,9 @@ jobs:
           export ASHEN_STABLE_REFERENCE="$RUNNER_TEMP/stable.apk"
           curl -fLsS --retry 3 "https://github.com/$GITHUB_REPOSITORY/releases/download/bolum-1-v1.0.0/Ashen-Vale-Episode-1.apk" -o "$ASHEN_STABLE_REFERENCE"
           echo "$(jq -r .sha256 delivery/episode1.json)  $ASHEN_STABLE_REFERENCE" | sha256sum -c -
-          # Use the SDK emulator's bundled software Vulkan backend. No host ICD
-          # path or hardware GPU is required on a fresh hosted Linux runner.
-          EMULATOR_VULKAN=on EMULATOR_GPU=swiftshader LIBGL_ALWAYS_SOFTWARE=1 timeout -k 10 12m xvfb-run -a bash tools/device-smoke.sh "$APK"
+          # This AVD can advertise Vulkan but return zero physical devices.
+          # The packaged app must open a real GLES surface on a normal launch.
+          EMULATOR_VULKAN=off EMULATOR_GPU=host LIBGL_ALWAYS_SOFTWARE=1 timeout -k 10 12m xvfb-run -a bash tools/device-smoke.sh "$APK"
       - name: Save diagnostic frames and install evidence
         if: always()
         id: report
