@@ -160,7 +160,9 @@ func grad(parent: Control, colors: Array, vertical = false) -> TextureRect:
 
 func wipe():
 	if is_instance_valid(page):
-		remove_child(page)
+		# A Button can replace its own page while the viewport is dispatching
+		# touch release. Hide it now; detach only at the safe deletion point.
+		page.hide()
 		page.queue_free()
 	page = null
 	ritual = null

@@ -5,12 +5,26 @@ import sys
 from PIL import Image, ImageChops, ImageStat
 
 
+def frame_at(path):
+    with Image.open(path) as capture:
+        assert capture.width > capture.height, f'not landscape: {path.name}'
+        return capture.convert('RGB').resize((160, 90))
+
+
+def title_ready(path):
+    # AV_READY means the scene exists; Godot's centered boot icon may still be
+    # on the display while the first world shaders compile. Look for the actual
+    # gold start/continue button on the *left*, plus a visible world behind it.
+    frame = frame_at(path)
+    button = frame.crop((12, 53, 47, 58))
+    gold = sum(r > 155 and .6*r < g < .94*r and b < .85*g for r, g, b in button.getdata())
+    return gold > button.width * button.height * .55 and frame.convert('L').entropy() > 3
+
+
 def check(folder):
     frames = {}
     for name in ('title', 'court', 'dialogue', 'resumed'):
-        with Image.open(folder / f'android-{name}.png') as capture:
-            assert capture.width > capture.height, f'not landscape: {name}'
-            frame = capture.convert('RGB').resize((160, 90))
+        frame = frame_at(folder / f'android-{name}.png')
         contrast = sum(ImageStat.Stat(frame).stddev) / 3
         entropy = frame.convert('L').entropy()
         # Exclude the objective, touch controls, and dialogue/title text. A
@@ -31,4 +45,6 @@ def check(folder):
 
 
 if __name__ == '__main__':
+    if sys.argv[1] == '--title-ready':
+        sys.exit(0 if title_ready(Path(sys.argv[2])) else 1)
     check(Path(sys.argv[1]))

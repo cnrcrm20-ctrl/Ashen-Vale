@@ -64,8 +64,24 @@ fi
 ACT=$(adb shell cmd package resolve-activity --brief "$PK" | tail -1 | tr -d '\r'); [[ $ACT == $PK/* ]]
 wait_mark(){ local m=$1; echo "Waiting for $m"; for n in {1..55}; do if timeout 5 adb logcat -d -s 'godot:I' 'Godot:I' | grep -F "$m" >/dev/null; then return 0; fi; sleep 1; done; echo "Missing Android state $m";return 1; }
 shot(){ adb exec-out screencap -p >"$ROOT/build/shots/android-$1.png"; }
-launch(){ adb logcat -c;timeout 35 adb shell am start -W -n "$ACT"; wait_mark 'AV_READY title';sleep 1; }
-launch;shot title
+launch(){
+  local title_png=$1
+  adb logcat -c; timeout 35 adb shell am start -W -n "$ACT"; wait_mark 'AV_READY title'
+  if [[ $PK == com.ashenvale.episodeone.preview ]]; then
+    # Read Android's presented surface, not an engine screenshot. Cold GPU
+    # compilation can keep the boot splash visible after the scene exists.
+    for n in {1..40}; do
+      timeout 5 adb exec-out screencap -p > "$title_png"
+      if python3 tools/check-android-frames.py --title-ready "$title_png"; then
+        echo 'ANDROID_TITLE_VISIBLE PASS'; return 0
+      fi
+      sleep 1
+    done
+    echo '::error::No visible start/continue button on the Android title'; return 1
+  fi
+  sleep 1; adb exec-out screencap -p > "$title_png"
+}
+launch "$ROOT/build/shots/android-title.png"
 read -r W H < <(python3 -c 'import struct;print(*struct.unpack(">II",open("build/shots/android-title.png","rb").read()[16:24]))'); [[ $W -gt $H ]]
 tap(){ adb shell input tap "$((W*$1/100))" "$((H*$2/100))"; }
 tap 14 70;wait_mark 'AV_MENU settings';adb shell input keyevent 4; sleep 1; tap 17 61;wait_mark 'AV_BEAT 0';wait_mark 'AV_WALK';sleep 1;shot court
@@ -83,10 +99,10 @@ tap 90 89;wait_mark 'AV_LINE 0:0';sleep 1;shot dialogue
 for n in 1 2 3; do tap 86 93;sleep .5;done; wait_mark 'AV_BEAT 1'
 # A real touch drag, not a debug teleport. Android save/resume is exercised by process death.
 adb shell input swipe "$((W*11/100))" "$((H*81/100))" "$((W*14/100))" "$((H*58/100))" 1500;wait_mark 'AV_MOVED'
-adb logcat -d -s "godot:I" "Godot:I" >"$D/first-launch.log";adb shell input keyevent 3;sleep 1;adb shell am force-stop "$PK";launch;tap 17 61;wait_mark 'AV_BEAT 1'; wait_mark 'AV_WALK';adb shell pidof "$PK";shot resumed
-adb logcat -d -s 'godot:I' 'Godot:I' >"$D/resume.log"
+adb logcat -d -s "godot:I" "Godot:I" "AndroidRuntime:E" >"$D/first-launch.log";adb shell input keyevent 3;sleep 1;adb shell am force-stop "$PK";launch "$D/return-title.png";tap 17 61;wait_mark 'AV_BEAT 1'; wait_mark 'AV_WALK';adb shell pidof "$PK";shot resumed
+adb logcat -d -s 'godot:I' 'Godot:I' 'AndroidRuntime:E' >"$D/resume.log"
 python3 tools/check-android-frames.py "$ROOT/build/shots" | tee "$D/frames.log"
-if grep -E 'Program linking failed|SHADER ERROR|SCRIPT ERROR:|FATAL EXCEPTION|Failed loading resource: res://|No loader found for resource: res://' "$D/first-launch.log" "$D/resume.log";then echo '::error::Android shader, script or packaged resource failure';exit 1;fi
+if grep -E '[[:space:]]E godot[[:space:]]*: ERROR:|Program linking failed|SHADER ERROR|SCRIPT ERROR:|FATAL EXCEPTION|Failed loading resource: res://|No loader found for resource: res://' "$D/first-launch.log" "$D/resume.log";then echo '::error::Android shader, script or packaged resource failure';exit 1;fi
 if [[ $PK == com.ashenvale.episodeone.preview ]]; then
   if grep -Fq 'AV_GRAPHICS startup=gles3' "$D/first-launch.log"; then
     grep -E 'OpenGL API .*3[.][0-9].*Compatibility - Using Device: .*[[:alnum:]]' "$D/first-launch.log"
