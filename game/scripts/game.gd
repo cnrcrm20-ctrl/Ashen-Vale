@@ -1,25 +1,28 @@
 extends Node3D
 const World = preload("res://scripts/world.gd")
+const Haven = preload("res://scripts/haven.gd")
+const Night = preload("res://scripts/kalkstein.gd")
+const Direction = preload("res://scripts/direction.gd")
 const Actor = preload("res://scripts/actor.gd")
 const Interface = preload("res://scripts/interface.gd")
 const Sound = preload("res://scripts/sound.gd")
-const SLOT = "user://chapter-one.json"
+const SLOT = "user://chapter-one-kalkstein.json"
 const SETTINGS = "user://settings.cfg"
 const SPELLS = ["Fitil", "Dipses", "Siper", "Yel Avucu"]
 const ACTS = {"wick": 0, "water": 1, "guard": 2, "gust": 3}
 const NOTES = [
 	[
 		[
-			"Hedi'nin mührü",
+			"Matilda'nın mührü",
 			"Taştan oyulmuş mührün altında çatlak var. Mührün sağlam çıkması, içinde yazanın doğru olduğuna yetmez."
 		],
 		[
 			"Bostan eşiği",
-			"İlyan her geçtiğinde oynayan taşı eliyle düzeltiyor. Ev bazen seni tutan değil, topuğunun ezbere tanıdığı yer."
+			"Lyander her geçtiğinde oynayan taşı eliyle düzeltiyor. Ev bazen seni tutan değil, topuğunun ezbere tanıdığı yer."
 		],
 		[
 			"Çömlek balığı",
-			"Yüzgeci bir kamış ucuyla çizilmiş. Gövdenin kırık kenarında Mina'nın küçük parmak izi var."
+			"Yüzgeci bir kamış ucuyla çizilmiş. Gövdenin kırık kenarında Lyra'nın küçük parmak izi var."
 		]
 	],
 	[
@@ -29,7 +32,7 @@ const NOTES = [
 		],
 		[
 			"Tek çizmeli iz",
-			"Sağda su, solda toz. İkisinden birini izlersen Tamar iki ayrı insan gibi görünür."
+			"Sağda su, solda toz. İkisinden birini izlersen Aldric iki ayrı insan gibi görünür."
 		],
 		[
 			"Kuru yalak",
@@ -54,9 +57,9 @@ const NOTES = [
 		],
 		[
 			"Altıncı tahta",
-			"Ekin ilk gece çarıklar için iki kişilik bir tahta buldu. Deftere yazılmayacak ilk okul kuralı."
+			"Ariadne ilk gece çarıklar için iki kişilik bir tahta buldu. Deftere yazılmayacak ilk okul kuralı."
 		],
-		["Kayıt çentiği", "Üç sütunun altı boş. Oris ilk insan büyücünün adı için orada yer buldu."]
+		["Kayıt çentiği", "Üç sütunun altı boş. Dorian ilk insan büyücünün adı için orada yer buldu."]
 	],
 	[
 		[
@@ -65,7 +68,7 @@ const NOTES = [
 		],
 		[
 			"Sofradaki boşluk",
-			"Ese bir kâseyi diğerlerinden sonra toplar. Hatırlamak her zaman yüksek sesle olmaz."
+			"Edda bir kâseyi diğerlerinden sonra toplar. Hatırlamak her zaman yüksek sesle olmaz."
 		],
 		[
 			"Akşam sayımı",
@@ -75,8 +78,8 @@ const NOTES = [
 	[
 		["Sekiz çentik", "Her dalda bir koyu çentik: karanlığı tanımak, onu işlemek değildir."],
 		[
-			"Deren'in satırı",
-			"Kuyudaki sıra uzuyor. Deren sebep yazmamış; görmediğini yazmayı reddetmiş."
+			"Dafne'nin satırı",
+			"Kuyudaki sıra uzuyor. Dafne sebep yazmamış; görmediğini yazmayı reddetmiş."
 		],
 		[
 			"Yün disk",
@@ -90,7 +93,7 @@ const NOTES = [
 		],
 		[
 			"Tanık dalı",
-			"Ekin çarka dokunmak yerine incir sapını bıraktı. Su, eller çekilince de aynı yöne aktı."
+			"Ariadne çarka dokunmak yerine incir sapını bıraktı. Su, eller çekilince de aynı yöne aktı."
 		],
 		[
 			"Yol defteri",
@@ -104,19 +107,18 @@ var beats: Array
 var zones: Array
 var trips: Dictionary
 var round_no = -1
-var lookout
-var watch_ring
 var practice_disc
 var movement_logged = false
 var course_wave = 0.
 var world
+var direction
 var hero
 var ui
 var audio
 var camera: Camera3D
 var canvas: CanvasLayer
 var mode = "title"
-var back_mode = "title"
+var back_mode = "explore"
 var active = false
 var completed = false
 var zone = -1
@@ -138,7 +140,7 @@ var answer_action = ""
 var active_question = ""
 var focus_point = Vector3.ZERO
 var options = {
-	"high": true, "big": false, "volume": .75, "haptic": true, "voice": false, "guide": true
+	"high": true, "big": false, "volume": .75, "haptic": true, "dub": true, "guide": false
 }
 var move_vec = Vector2.ZERO
 var touch_move = Vector2.ZERO
@@ -185,7 +187,14 @@ var camera_ready = false
 var book_page = 0
 var codex_page = 0
 var last_goal_key = ""
-var voice_id = ""
+var barks: Array = []
+var bark_left = 0.
+var spoken_left = 0.
+var jumped = 0.
+var gate_open = false
+var portal_window: MeshInstance3D
+var look_shake = 0.
+var trigger_down = false
 
 
 func read_json(path: String):
@@ -202,10 +211,11 @@ func _ready():
 	if config.load(SETTINGS) == OK:
 		for k in options:
 			options[k] = config.get_value("game", k, options[k])
+	apply_scale()
 	audio = Sound.new()
 	add_child(audio)
 	audio.loudness(options.volume)
-	audio.score("kirecdam")
+	audio.score("kalkstein")
 	canvas = CanvasLayer.new()
 	add_child(canvas)
 	ui = Interface.new()
@@ -222,9 +232,19 @@ func _ready():
 	camera.fov = 62
 	camera.far = 1400.
 	camera.near = .12
+	if RenderingServer.get_current_rendering_method() == "forward_plus":
+		camera.attributes = CameraAttributesPractical.new()
 	add_child(camera)
 	camera.current = true
 	open_title()
+
+
+func apply_scale():
+	var vp = get_viewport()
+	vp.mesh_lod_threshold = 2. if OS.has_feature("mobile") else 1.
+	if OS.has_feature("mobile"):
+		vp.scaling_3d_scale = .88 if options.high else .72
+		vp.msaa_3d = Viewport.MSAA_DISABLED
 
 
 func fit_safe():
@@ -241,12 +261,22 @@ func fit_safe():
 
 
 func open_title():
+	camera.environment = null
+	silence()
 	active = false
+	if not is_instance_valid(world) or zone != 0:
+		build_zone(0)
+	world.stage(beats[0])
+	hero.position = world.loc(1., .2)
+	camera.position = world.loc(-2.15, 3.15) + Vector3.UP * 1.78
+	camera.look_at(world.loc(7.4, -1.) + Vector3.UP * 1.15)
+	camera.fov = 56.
+	camera_ready = false
 	mode = "title"
 	print("AV_READY title")
 	ui.title(FileAccess.file_exists(SLOT), slot_done())
 	fit_safe()
-	audio.score("kirecdam")
+	audio.score("kalkstein")
 
 
 func slot_done() -> bool:
@@ -266,13 +296,17 @@ func settings_save():
 func checkpoint():
 	if not active or not is_instance_valid(hero):
 		return
-	var p = hero.position
+	var p = vstart if zone == 0 and vaulting else hero.position
+	if zone == 2 and beat.kind == "forest_cross" and absf(world.channel(p)) < 4.65:
+		p = world.bank(Haven.LOG_X if world.crossing_lane(p) == Haven.LOG else Haven.FORD_X,-5.3)
 	var d = {
-		"version": 1,
+		"version": 2,
+		"beat_key": beat_key(beat),
 		"index": index,
 		"zone": zone,
 		"pos": [p.x, p.z],
 		"yaw": yaw,
+		"ducking": hero.crouched,
 		"mask": mask,
 		"learned": learned,
 		"selected": selected,
@@ -296,17 +330,27 @@ func checkpoint():
 func _notification(what):
 	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
 		checkpoint()
+		if is_instance_valid(audio): audio.hold_voice(true)
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST and is_instance_valid(ui):
 		back()
+
+
+func beat_key(b: Dictionary) -> String:
+	return "%s/%s/%s/%s" % [int(b.zone),b.kind,b.model,int(b.at[0])]
 
 
 func start(restore: bool):
 	var old = {}
 	if restore and FileAccess.file_exists(SLOT):
 		var raw = read_json(SLOT)
-		if raw is Dictionary and raw.get("version", 0) == 1:
+		if raw is Dictionary and raw.get("version", 0) == 2:
 			old = raw
 	index = clampi(int(old.get("index", 0)), 0, beats.size() - 1)
+	if old.has("beat_key") and beat_key(beats[index]) != old.beat_key:
+		for b in beats:
+			if beat_key(b) == old.beat_key:
+				index = int(b.id)
+				break
 	records = old.get("records", {})
 	findings = old.get("findings", [])
 	learned = []
@@ -317,6 +361,7 @@ func start(restore: bool):
 	selected = clampi(int(old.get("selected", 0)), 0, 3)
 	mask = int(old.get("mask", 0))
 	elapsed = float(old.get("seconds", 0))
+	silence()
 	completed = false
 	active = true
 	zone = -1
@@ -327,9 +372,12 @@ func start(restore: bool):
 	feedback = ""
 	clear_input()
 	enter(index, true)
+	hero.crouched = bool(old.get("ducking", false))
+	if zone == 0:
+		world.ducking = hero.crouched
 	if old.has("pos") and int(old.get("zone", -1)) == zone:
 		var saved = Vector3(old.pos[0], 0, old.pos[1])
-		saved.y = world.altitude(saved.x, saved.z)
+		saved.y = world.walk_height(saved.x, saved.z)
 		if world.passable(saved):
 			hero.position = saved
 		yaw = old.get("yaw", 0.)
@@ -355,7 +403,8 @@ func build_zone(z: int):
 		remove_child(world)
 		world.queue_free()
 	zone = z
-	world = World.new()
+	portal_window = null
+	world = Night.new() if zone == 0 else (Haven.new() if zone == 2 else World.new())
 	world.name = "District" + str(zone)
 	add_child(world)
 	var local: Array = []
@@ -363,6 +412,9 @@ func build_zone(z: int):
 		if int(b.zone) == zone:
 			local.append(b)
 	world.setup(zone, local, options.high)
+	direction = Direction.new()
+	world.add_child(direction)
+	direction.world = world
 	for trip in trips.values():
 		if int(trip.zone) == zone:
 			for row in trip.stops:
@@ -371,8 +423,8 @@ func build_zone(z: int):
 	world.flush()
 	hero = Actor.new()
 	world.add_child(hero)
-	hero.make("İlyan")
-	hero.position = world.loc(8, 1) if zone == 0 else world.loc(0, 0)
+	hero.make("Lyander")
+	hero.position = world.loc(1, .18) if zone == 0 else world.loc(Haven.START_DEPTH if zone == 2 else 0., 0.)
 	hero.heading = PI
 	hero.rotation.y = PI
 	yaw = 0
@@ -383,31 +435,50 @@ func build_zone(z: int):
 	lore_pos = []
 	for i in range(3):
 		var p = world.loc(world.length * (.19 + i * .28), -12 if i % 2 == 0 else 13)
+		if zone == 0:
+			p = world.point([[22.6, -3.25], [50.6, 2.4], [41., 2.4]][i])
 		lore_pos.append(p)
-		var n = token(p, "#9cbca9", .34)
+		var n = findable(p, i, false)
 		lore_nodes.append(n)
 		n.visible = not findings.has("%s:%s" % [zone, i])
-	audio.score("kirecdam" if zone < 2 else ("vadi" if zone in [2, 6] else "olcu"))
+		if zone == 0:
+			n.mesh = null  # the seal, loose stone and well are the discoverable props
+	audio.ambience_at("rain" if zone == 0 else ("stream" if zone in [2, 6] else ""), world.bank(0,-1.) if zone == 2 else world.loc(37., 1.))
+	audio.fire_at(world.lantern if zone == 0 else (world.hearth if zone == 2 else null))
+	audio.score("kalkstein" if zone < 2 else ("vadi" if zone in [2, 6] else "olcu"))
 
 
-func token(p: Vector3, color: String, scale_: float) -> MeshInstance3D:
+func findable(p: Vector3, i: int, clue: bool) -> MeshInstance3D:
 	var m = MeshInstance3D.new()
-	var prism = PrismMesh.new()
-	prism.size = Vector3(.76, 1, .76) * scale_
-	m.mesh = prism
-	m.material_override = world.material(color, true)
 	world.add_child(m)
-	m.position = p + Vector3.UP * 1.08
+	m.position = p
+	if zone == 0: return m  # existing props are the inspectable objects here
+	var props = [
+		[], ["log","banner_sheaf","plate"], ["bench_stone","banner_sheaf","bench_stone"],
+		["bed","bedside","table_laid"], ["pot","candle_cluster","jar_storage"],
+		["bench_stone","plate","banner_sheaf"], ["jar_storage","pot","lane_wall"]
+	]
+	var id = props[zone][i] if clue else ["sack_tied","plate","pot"][i]
+	m.mesh = world.set_mesh(id)
+	m.scale = Vector3.ONE * (.72 if clue else .92)
+	if zone == 1 and clue:
+		if i == 0:
+			m.mesh = world.geometry("rock"); m.scale = Vector3(.20,.024,.34)
+			m.position.y += .025; m.material_override = world.material("#504d44")
+		elif i == 2:
+			m.material_override = world.water_mat; m.scale = Vector3(2.4,.92,2.4)
 	return m
 
 
 func enter(i: int, restore = false):
+	if is_instance_valid(direction):
+		if direction.remembering: camera_ready = false
+		direction.reset()
+	silence()
+	jumped = 0.
+	gate_open = false
+	look_shake = 0.
 	round_no = -1
-	if is_instance_valid(lookout):
-		lookout.hide()
-	lookout = null
-	if is_instance_valid(watch_ring):
-		watch_ring.queue_free()
 	if is_instance_valid(practice_disc):
 		practice_disc.queue_free()
 	practice_disc = null
@@ -426,9 +497,13 @@ func enter(i: int, restore = false):
 	clues = []
 	trail = false
 	vaulting = false
+	if zone == 0 and world.route != str(flags.get("passage", "")):
+		world.set_route(str(flags.get("passage", "")))
 	world.stage(beat)
+	if beat.kind == "gate" and flags.get("open_water", false):
+		open_water()
 	if is_instance_valid(hero.mark):
-		hero.mark.visible = zone >= 2 or beat.model == "mark" or flags.has("revealed")
+		hero.show_mark(zone >= 2 or beat.model == "mark" or flags.has("revealed"))
 	if zone == 6:
 		world.reversed = (
 			(beat.model == "wheel" and beat.kind == "look") or flags.has("reverse_current")
@@ -442,19 +517,23 @@ func enter(i: int, restore = false):
 				clampf(float(beat.at[1]) + [5, -7, 5][j], -12, 12)
 			)
 			clues.append(p)
-			var n = token(p, "#efc981", .47)
+			var n = findable(p,j,true)
 			clue_nodes.append(n)
 			n.visible = (mask & (1 << j)) == 0
-	if beat.kind in ["testguard", "testgust", "testwater"] and world.people.has("Ekin"):
-		world.people["Ekin"].position = world.loc(beat.at[0] - 1, beat.at[1] + 2)
-	if different:
+	if beat.kind in ["testguard", "testgust", "testwater"] and world.people.has("Ariadne"):
+		world.people["Ariadne"].position = world.loc(beat.at[0] - 1, beat.at[1] + 2)
+	if different and zone != 0:
 		mode = "ribbon"
 		ribbon_time = 3.65
 		ui.ribbon(zones[zone].name, zones[zone].subtitle)
 		audio.fx("seal", .65)
 	else:
 		explore()
-	ui.set_goal("%02d  /  %s" % [zone + 1, zones[zone].name], beat.title)
+	ui.set_goal(zones[zone].name, beat.title)
+	if zone == 0 and beat.kind == "night_pass":
+		ui.set_goal(zones[zone].name, "Mutfak kapısından kuyuya çık" if world.route == Night.KITCHEN else "Kilerde eğil, alçak eşiğin altından geç")
+	barks = beat.get("entry", []).duplicate()
+	bark_left = .18
 	if restore and trips.has(beat.kind) and flags.has(stop_key()):
 		set_round(int(flags[stop_key()]))
 	last_goal_key = ""
@@ -466,7 +545,7 @@ func explore():
 	print("AV_WALK")
 	ui.gameplay()
 	clear_input()
-	world.way.visible = options.guide
+	world.way.visible = options.guide and zone != 0 and not beat.kind.begins_with("forest_")
 
 
 func advance():
@@ -483,7 +562,7 @@ func advance():
 				"BİRİNCİ BÖLÜM TAMAMLANDI",
 				[["YOL DEFTERİ", "journal"], ["ANA MENÜ", "title"]],
 				(
-					"İki kayıt, kil balığın kuyruğu ve Mina'nın mektubu seninle. İğdegediği yolu yarına kaldı.   •   %d dakika"
+					"İki kayıt, kil balığın kuyruğu ve Lyra'nın mektubu seninle. İğdegediği yolu yarına kaldı.   •   %d dakika"
 					% int(elapsed / 60)
 				)
 			)
@@ -500,22 +579,44 @@ func message(t: String):
 
 
 func silence():
-	if options.voice:
-		DisplayServer.tts_stop()
+	barks.clear()
+	bark_left = 0.
+	spoken_left = 0.
+	if is_instance_valid(audio):
+		audio.quiet()
+	if is_instance_valid(ui):
+		ui.caption("")
 
 
-func narrate(t: String):
-	if not options.voice:
+func say(line: Array, point: Vector3) -> float:
+	var speaker = hero if line[0] == "Lyander" else world.people.get(line[0])
+	return audio.speak(line, speaker, point, options.dub)
+
+
+func voices_tick(dt: float):
+	var held = mode not in ["explore", "dialog"]
+	audio.hold_voice(held)
+	if held:
 		return
-	if voice_id == "":
-		var ids = DisplayServer.tts_get_voices_for_language("tr")
-		if ids.is_empty():
-			return
-		voice_id = ids[0]
-	DisplayServer.tts_speak(t, voice_id, 83, 1., 1., 0, true)
+	if mode == "dialog":
+		if spoken_left > 0.:
+			spoken_left -= dt
+			if spoken_left <= 0.:
+				next_line()
+		return
+	bark_left = maxf(0., bark_left - dt)
+	if bark_left > 0.:
+		return
+	if barks.is_empty():
+		ui.caption("")
+		return
+	var row = barks.pop_front()
+	ui.caption("%s  ·  %s" % [row[0], row[1]])
+	bark_left = maxf(say(row, hero.position), float(str(row[1]).length()) / 19.) + .30
 
 
 func conversation(pages: Array, continuation: String, at: Vector3):
+	silence()
 	world.ensemble(pages, at, hero.position)
 	lines = pages.duplicate(true)
 	after = continuation
@@ -532,10 +633,19 @@ func show_line():
 	print("AV_LINE ", index, ":", line_no)
 	var ln = lines[line_no]
 	ui.dialogue(ln[0], ln[1], "%02d  /  %02d" % [line_no + 1, lines.size()])
-	narrate(ln[1])
-	var person = hero if ln[0] == "İlyan" else world.people.get(ln[0], null)
+	var previous = direction.remembering
+	direction.on_line(beat, ln[0], ln[1], hero)
+	if line_no == 0 or previous != direction.remembering or ln[0] != lines[line_no-1][0]:
+		camera_ready = false
+	var duration = say(ln, focus_point)
+	spoken_left = duration + .36 if options.dub and duration > 0 else 0.
+	var person = hero if ln[0] == "Lyander" else world.people.get(ln[0], null)
 	if is_instance_valid(person):
-		person.gesture("Interact" if line_no % 2 == 0 else "Use_Item", .75)
+		var clip = "Idle_Talking_Loop"
+		if ln[0] == "Matilda": clip = "Idle_No_Loop"
+		elif ln[0] == "İskele kâtibi": clip = "Idle_FoldArms_Loop"
+		elif beat.kind == "night_fish" and ln[0] == "Lyra": clip = "PickUp_Table"
+		person.gesture(clip, maxf(1.4, duration))
 
 
 func next_line():
@@ -582,7 +692,7 @@ func choose(n: int):
 		return
 	var ok = int(ask.correct) < 0 or n == int(ask.correct)
 	var response = str(ask.options[n][1])
-	var sp = "İlyan"
+	var sp = "Lyander"
 	if ": " in response:
 		var a = response.split(": ", true, 1)
 		sp = a[0]
@@ -629,15 +739,11 @@ func stage_action():
 			"spell"
 		)
 	elif k == "gate":
-		mode = "crossing"
-		crossing = 0.
-		cross_start = hero.position
-		clear_input()
-		var basin = world.point(beat.at)
-		world.window_water(basin)
-		audio.fx("water")
-		world.person_on_set("Tamar", basin + Vector3(-1.9, 0, -.9)).gesture("Spellcasting", 3.3)
-		ui.ribbon("Su Eşiği", "Geçidi Tamar açtı. Adımı İlyan atıyor.")
+		open_water()
+		flags["open_water"] = true
+		checkpoint()
+		explore()
+		ui.set_goal("Su Eşiği", "Suyun öbür yanına adım at")
 	elif k == "trail":
 		explore()
 		trail = true
@@ -655,6 +761,16 @@ func stage_action():
 		advance()
 
 
+func open_water():
+	gate_open = true
+	cross_start = hero.position
+	var center_ = world.point(beat.at)
+	if not is_instance_valid(portal_window):
+		portal_window = world.window_water(center_)
+	world.person_on_set("Aldric", center_ + Vector3(-1.9, 0, -.9)).gesture("Spellcasting", 1.3)
+	audio.at("water", center_, .76)
+
+
 func open_ritual():
 	mode = "ritual"
 	clear_input()
@@ -664,7 +780,7 @@ func open_ritual():
 
 func ritual_fx(id: String, ok: bool):
 	var key = id if id != "dodge" else "wind"
-	audio.fx(key if ok else "miss")
+	audio.at(key if ok else "miss", hero.position + Vector3.UP)
 	hero.gesture(
 		(
 			("Block" if id == "shield" else ("Dodge_Left" if id == "dodge" else "Spellcast_Shoot"))
@@ -749,10 +865,17 @@ func burst(at: Vector3, key: String, ok = true):
 
 func terrain_target() -> Vector3:
 	nearby_clue = -1
+	if zone == 0:
+		return world.destination(beat, hero.position)
+	if beat.kind == "forest_cross":
+		var x = Haven.LOG_X if world.crossing_lane(hero.position) == Haven.LOG else Haven.FORD_X
+		return world.bank(x, 5.5)
+	if gate_open:
+		return world.point(beat.at) + Vector3(0, 0, -1.5)
 	if round_no >= 0:
 		return world.point(current_stop().at)
 	if trail:
-		return world.people["Tamar"].position
+		return world.people["Aldric"].position
 	if beat.kind == "search" and mask != 7:
 		var best = INF
 		for i in range(3):
@@ -783,10 +906,45 @@ func interact():
 		conversation([[NOTES[zone][i][0], NOTES[zone][i][1]]], "back", lore_pos[i])
 		return
 	if trail:
-		message("Tamar'ın ıslak izlerinden ayrılma.")
+		message("Aldric'in ıslak izlerinden ayrılma.")
 		return
+	if zone == 0:
+		if ds > night_reach() or not night_access(current_target):
+			return
+		match beat.kind:
+			"night_fork":
+				var chosen = world.closest_route(hero.position)
+				flags["passage"] = chosen
+				flags["choice_" + str(index)] = "Tavaları düşürdüm; fener mutfağa döndü." if chosen == Night.KITCHEN else "Kiler anahtarını aldım; nöbetçi sofada kaldı."
+				world.set_route(chosen, true)
+				audio.at("clatter" if chosen == Night.KITCHEN else "tap", current_target)
+				hero.gesture("Interact", .55)
+				advance()
+				return
+			"night_pass", "night_out":
+				advance()
+				return
+			"night_chase":
+				start_vault()
+				return
+	if zone == 2 and beat.kind.begins_with("forest_"):
+		if beat.kind == "forest_cross": return
+		if beat.kind == "forest_bank" and ds > 2.6 and hero.position.distance_to(world.loc(-49.,-4.8)) < 2.5:
+			message("Damlalar susunca su hâlâ duyuluyor. Öteki kıyıda yapraklar hep bir yana yatmış.")
+			audio.at("tap", hero.position, .35)
+			return
+		if ds > 2.6: return
+		if beat.kind == "forest_shoe" and not hero.crouched:
+			message("Kayışı çekme. Eğil, çarığı kökün dibinden yana çevir.")
+			return
+		if beat.kind == "forest_ember" and -hero.position.z < 12. and not hero.crouched:
+			message("Bu yüzü yağmur yemiş. Saçağın tarafından yokla ya da kütüğün altına eğil.")
+			return
+		hero.gesture("Interact", .85)
+	if gate_open:
+		return  # The last step is locomotion, never a second conversation or teleport.
 	if ds > 4.45:
-		message("İşaretli yere yaklaş.")
+		message(beat.title)
 		return
 	if round_no >= 0:
 		round_interact()
@@ -800,8 +958,56 @@ func interact():
 		conversation([[beat.clues[i][0], beat.clues[i][1]]], "clue", current_target)
 		audio.fx("tap")
 		return
-	conversation(beat.lines, "stage", current_target)
+	if beat.kind == "surge":
+		var at = hero.mark_pose().origin if is_instance_valid(hero.mark) else hero.position + Vector3.UP
+		burst(at, "water")
+		audio.at("water", at)
+		hero.gesture("Hit_Chest", .85)
+		look_shake = .60
+	var pages = beat.lines.duplicate(true)
+	if beat.model == "shelter" and flags.has("brook"):
+		pages.push_front(["Lyander", "Eğilirken cebimi tuttum. Balığın kuyruğuna bir şey olmamış." if flags.brook == Haven.LOG else "Taşın üstünde suyu beklerken cebim ıslandı. Bakayım… balık hâlâ burada."])
+	conversation(pages, "stage", current_target)
 	audio.fx("tap", .65)
+
+
+func night_reach() -> float:
+	return 2.45 if beat.kind == "night_chase" else 1.9
+
+
+func night_access(p: Vector3) -> bool:
+	if beat.kind == "night_chase": return absf(hero.position.x) < 1.65
+	return not world.opaque(hero.position + Vector3.UP * 1.12, p + Vector3.UP * 1.12)
+
+
+func start_vault():
+	vaulting = true
+	vt = 0.
+	vstart = hero.position
+	vend = world.loc(54.25, clampf(hero.position.x, -1., 1.))
+	hero.crouched = false
+	world.ducking = false
+	hero.gesture("Jump_Start", .70)
+	audio.at("step", vstart)
+
+
+func crouch():
+	if mode != "explore" or vaulting: return
+	if zone == 0 and hero.crouched and world.route == Night.CELLAR and absf(-hero.position.z - 34.4) < .95:
+		return
+	hero.crouched = not hero.crouched
+	if hero.crouched: run = false
+	if zone == 0: world.ducking = hero.crouched
+
+
+func jump():
+	if mode != "explore" or jumped > 0. or vaulting or hero.crouched: return
+	if beat.kind == "night_chase" and hero.position.distance_to(terrain_target()) < night_reach() and night_access(terrain_target()):
+		start_vault()
+		return
+	jumped = .60
+	hero.gesture("Jump_Start", .6)
+	audio.at("step", hero.position, .35)
 
 
 func cast():
@@ -816,7 +1022,7 @@ func cast():
 	var key = ["ember", "water", "shield", "wind"][selected]
 	hero.gesture("Block" if selected == 2 else "Spellcast_Shoot", .70)
 	burst(hero.position + Vector3.UP * 1.0, key)
-	audio.fx(key)
+	audio.at(key, hero.position + Vector3.UP)
 	message(SPELLS[selected])
 
 
@@ -850,6 +1056,7 @@ func _physics_process(dt):
 		return
 	var delta = minf(dt, .05)
 	clock += delta
+	voices_tick(delta)
 	cooldown = maxf(cooldown - delta, 0.)
 	last_nav = maxf(0, last_nav - delta)
 	if (
@@ -885,9 +1092,7 @@ func _physics_process(dt):
 			explore()
 	if mode in ["explore", "ribbon", "dialog", "choice", "ritual"]:
 		world.frame(delta, hero.position, trail)
-		for n in clue_nodes + lore_nodes:
-			if is_instance_valid(n) and n.visible:
-				n.rotation.y += delta * 1.2
+		if mode == "dialog": direction.tick(delta)
 	if mode == "explore":
 		if vaulting:
 			vt = minf(1, vt + delta * 1.32)
@@ -899,8 +1104,28 @@ func _physics_process(dt):
 		else:
 			walk(delta)
 		field_frame(delta)
+		if zone == 0 and not vaulting:
+			if world.tick_patrol(delta, hero.position, velocity.length()):
+				hero.position = world.retry_position()
+				camera_ready = false
+				clear_input()
+				audio.at("miss", hero.position, .65)
+				message("Duvarın gölgesine dön. Ortadaki alçak taşı aş." if beat.kind == "night_chase" else "Fener sana döndü. Sandıkların ardında ışığın geçmesini bekle.")
+			world.step_clock += delta * (2.5 if beat.kind == "night_chase" else 1.25)
+			if world.step_clock >= 1.:
+				world.step_clock = 0.
+				audio.foot("rock", world.guard.position, .58)
+		if beat.kind == "forest_cross" and world.crossed_by != "" and world.channel(hero.position) > 4.25:
+			flags.brook = world.crossed_by
+			flags["choice_" + str(index)] = "Çayı devrik çamın üstünden geçtim." if flags.brook == Haven.LOG else "Çayı sığ taşlardan geçtim."
+			advance()
+			return
+		if gate_open and velocity.length() > .08 and hero.position.distance_to(cross_start) > .30 and hero.position.distance_to(terrain_target()) < .95:
+			gate_open = false; mode = "crossing"; crossing = 0.; cross_start = hero.position
+			clear_input(); ui.hud.hide(); world.way.hide()
+			return
 		if trail:
-			var guide = world.people["Tamar"]
+			var guide = world.people["Aldric"]
 			var old = guide.position
 			var dist = hero.position.distance_to(old)
 			if dist < 18:
@@ -922,12 +1147,14 @@ func _physics_process(dt):
 		var distance = hero.position.distance_to(current_target)
 		nearby_note = -1
 		for i in range(lore_pos.size()):
-			if lore_nodes[i].visible and hero.position.distance_to(lore_pos[i]) < 3.5:
+			if lore_nodes[i].visible and hero.position.distance_to(lore_pos[i]) < (1.5 if zone == 0 else 3.5) and (zone != 0 or night_access(lore_pos[i])):
 				nearby_note = i
 				break
-		can_act = (distance < 4.45 and not trail) or nearby_note >= 0
+		can_act = (distance < 4.45 and not trail and not gate_open) or nearby_note >= 0
+		if zone == 0:
+			can_act = (distance < night_reach() and night_access(current_target)) or (nearby_note >= 0 and distance > 4.25)
 		world.way.position = current_target + Vector3.UP * .07
-		world.way.visible = options.guide
+		world.way.visible = options.guide and zone != 0 and not beat.kind.begins_with("forest_")
 		var px = (
 			camera.unproject_position(current_target + Vector3.UP * 1.8)
 			if not camera.is_position_behind(current_target)
@@ -942,21 +1169,48 @@ func _physics_process(dt):
 			act = "Notu al"
 		if beat.kind == "search" and nearby_clue >= 0:
 			act = "İzi oku"
+		if zone == 0:
+			match beat.kind:
+				"night_fork": act = "Tavaları düşür" if world.closest_route(hero.position) == Night.KITCHEN else "Anahtarı al"
+				"night_hear": act = "Kulak ver"
+				"night_fish": act = "Kuyruğu al"
+				"night_chase": act = "Duvarı aş"
+				"night_pass", "night_out": act = "Geç"
+			if nearby_note >= 0 and distance > 4.25: act = "İncele"
+		if beat.kind.begins_with("forest_"):
+			can_act = distance < 2.6 and beat.kind != "forest_cross"
+			match beat.kind:
+				"forest_shoe": act = "Kayışı gevşet"
+				"forest_bank":
+					can_act = can_act or hero.position.distance_to(world.loc(-49.,-4.8)) < 2.5
+					act = "Kulak ver"
+				"forest_ember": act = "Yongayı yokla"
 		ui.guidance(
 			px,
 			distance,
 			can_act,
 			act,
 			SPELLS[selected] if learned.has(selected) else "",
-			feedback if feedback_t > 0 else ("Tamar'ı görüşte tut" if trail else "")
+			feedback if feedback_t > 0 else ("Aldric'i görüşte tut" if trail else "")
 		)
 		ui.marker.visible = ui.marker.visible and options.guide
-		ui.distance_label.visible = ui.distance_label.visible and options.guide
 		ui.scene_badge.text = (
 			("KANIT  %d / 3" % ((mask & 1) + ((mask >> 1) & 1) + ((mask >> 2) & 1)))
 			if beat.kind == "search"
 			else ""
 		)
+		if beat.kind.begins_with("forest_"):
+			ui.marker.hide()
+			if beat.kind == "forest_cross": ui.scene_badge.text = "Köpük son taşı örtüyor" if world.high_water() else "Son taş göründü"
+		if zone == 0:
+			ui.marker.hide()
+			if can_act and beat.kind == "night_wake" and last_goal_key != "lyra":
+				last_goal_key = "lyra"
+				print("AV_NEAR Lyra")
+			if world.suspicion > .05:
+				ui.scene_badge.text = "Sesini duydu" if world.heard else "Fener sana dönüyor"
+			elif beat.kind == "night_chase":
+				ui.scene_badge.text = "Ayak sesleri çok yakın" if world.chase_gap < 2.65 else "Bostana!"
 		feedback_t -= delta
 	elif mode in ["dialog", "choice", "ribbon", "ritual"]:
 		hero.motion(0, Vector3.ZERO, delta)
@@ -986,7 +1240,9 @@ func walk(dt):
 			Input.get_joy_axis(pad_id, JOY_AXIS_LEFT_X), Input.get_joy_axis(pad_id, JOY_AXIS_LEFT_Y)
 		)
 		if ax.length() > .17:
-			axes = ax
+			# A deliberate virtual-stick drag owns movement until it is released.
+			# The other stick and buttons still work, in either combination.
+			if touch_id == -1 or touch_move.length() < .12: axes = ax
 			ui.pad = true
 		var cam = Vector2(
 			Input.get_joy_axis(pad_id, JOY_AXIS_RIGHT_X),
@@ -1012,7 +1268,7 @@ func walk(dt):
 	var right = Vector3(cos(yaw), 0, -sin(yaw))
 	var wish = (
 		(right * axes.x + facing * axes.y)
-		* (4.95 if run or Input.is_key_pressed(KEY_SHIFT) else 2.95)
+		* (1.56 if hero.crouched else (4.95 if run or Input.is_key_pressed(KEY_SHIFT) else 2.95))
 	)
 	velocity = velocity.move_toward(wish, dt * (12.5 if wish.length() > .1 else 17.0))
 	var vel = velocity
@@ -1027,7 +1283,20 @@ func walk(dt):
 	n = p + Vector3(0, 0, vel.z * dt)
 	if world.passable(n):
 		p = n
-	p.y = world.altitude(p.x, p.z)
+	if beat.kind == "forest_cross":
+		var reason = world.footing(p,hero.crouched,vel.length(),jumped > .10)
+		if reason != "":
+			world.crossed_by = ""
+			hero.position = world.bank(Haven.LOG_X if world.crossing_lane(p) == Haven.LOG else Haven.FORD_X, -5.1)
+			audio.at("water",p,.67); hero.gesture("Hit_Chest",.45)
+			clear_input(); camera_ready = false; message(reason)
+			return
+		if absf(world.channel(p)) < 3.75: world.crossed_by = world.crossing_lane(p)
+		elif world.channel(p) < -4.25: world.crossed_by = ""
+	p.y = world.walk_height(p.x, p.z)
+	if jumped > 0.:
+		jumped = maxf(0., jumped - dt)
+		p.y += sin(PI * jumped / .60) * .82
 	hero.position = p
 	var v = p - old
 	var speed = Vector2(v.x, v.z).length() / dt
@@ -1038,15 +1307,23 @@ func walk(dt):
 	last_step += speed * dt
 	if last_step > 1.18:
 		last_step = 0.
-		audio.fx("step", .18)
+		var surface = "wood" if zone == 0 and -p.z < 11. else ("grass" if zone == 2 and -p.z < 40. else "rock")
+		if beat.kind == "forest_cross" and absf(world.channel(p)) < 4.: surface = "wood" if world.crossing_lane(p) == Haven.LOG else "rock"
+		audio.foot(surface, p, .31 if hero.crouched else (.74 if speed > 3.3 else .55))
 
 
 func follow(dt):
+	camera.environment = direction.echo_env if direction.remembering else null
 	var h = hero.position
 	var look = h + Vector3.UP * 1.24
 	var camdir = Vector3(sin(yaw) * cos(pitch), sin(pitch), cos(yaw) * cos(pitch))
 	var pos = look + camdir * 6.3
 	var fov = 64.
+	if zone == 0 and mode == "explore":
+		look.y -= .35 if hero.crouched else 0.
+		look += Vector3(cos(yaw), 0, -sin(yaw)) * .38
+		pos = look + camdir * (3.7 if beat.kind == "night_chase" else 2.75)
+		fov = 70. if beat.kind == "night_chase" else 61.
 	if mode == "ribbon":
 		look = h + Vector3(0, 1, -8.)
 		pos = h + Vector3(8 + sin(ribbon_time) * 2, 6.5, 7.5)
@@ -1069,9 +1346,42 @@ func follow(dt):
 			+ dir * .28
 		)
 		fov = 50.
-	pos = world.camera_safe(look, pos)
+	if mode == "dialog":
+		var speaker = lines[line_no][0]
+		var principal = hero if speaker == "Lyander" else world.people.get(speaker)
+		if is_instance_valid(principal) and principal.visible and principal.position.distance_to(h) < 13.:
+			var listener = hero
+			if principal == hero:
+				for ln in lines:
+					if ln[0] != "Lyander" and world.people.has(ln[0]):
+						listener = world.people[ln[0]]; break
+			elif beat.kind == "night_hear":
+				listener = world.people.Matilda if speaker == "İskele kâtibi" else world.people["İskele kâtibi"]
+			if principal != listener:
+				principal.face(listener.position)
+				principal.meet_eyes(listener.gaze_point())
+				listener.meet_eyes(principal.gaze_point())
+			look = principal.gaze_point() - Vector3.UP * .11
+			var shoulder = (listener.position - principal.position).slide(Vector3.UP).normalized()
+			if shoulder.is_zero_approx(): shoulder = Vector3(sin(principal.rotation.y),0,cos(principal.rotation.y))
+			var distance_ = 1.18 if zone == 0 else 1.62
+			pos = look + shoulder * distance_ + Vector3(shoulder.z,.16,-shoulder.x)*.64
+			fov = 38. if zone == 0 else 46.
+	if camera.attributes is CameraAttributesPractical:
+		camera.attributes.dof_blur_far_enabled = mode == "dialog" and options.high
+		camera.attributes.dof_blur_far_distance = pos.distance_to(look) + .64
+		camera.attributes.dof_blur_far_transition = 2.8
+		camera.attributes.dof_blur_amount = .095
+	if look_shake > 0:
+		pos += Vector3(sin(clock * 44.), cos(clock * 36.), 0) * look_shake * .18
+		look_shake -= dt
+	var insert = direction.shot() if mode == "dialog" else []
+	if not insert.is_empty():
+		pos = insert[0]; look = insert[1]; fov = insert[2]
+	if not direction.remembering: pos = world.camera_safe(look,pos)
 	if not camera_ready:
 		camera.position = pos
+		camera.fov = fov
 		camera_ready = true
 	else:
 		camera.position = camera.position.lerp(
@@ -1100,10 +1410,7 @@ func cmd(key: String):
 			checkpoint()
 			open_title()
 		"close_ribbon":
-			if mode == "crossing":
-				advance()
-			else:
-				explore()
+			if mode == "ribbon": explore()
 		"interact":
 			interact()
 		"cast":
@@ -1112,24 +1419,28 @@ func cmd(key: String):
 			dodge()
 		"cycle":
 			cycle_spell()
+		"crouch": crouch()
+		"jump": jump()
 		"sprint":
+			if hero.crouched: crouch()
 			run = not run
 			message("Koşu" if run else "Yürüyüş")
 		"next":
 			if mode == "dialog":
 				next_line()
 		"pause":
-			if mode == "explore":
-				pause_game()
+			if mode in ["explore", "dialog"]: pause_game()
 		"resume":
-			explore()
+			resume_game()
 		"settings":
 			return_screen = "pause" if active else "title"
 			show_settings()
 		"quality":
 			options.high = not options.high
+			apply_scale()
 			if is_instance_valid(world):
 				world.sun.shadow_enabled = options.high
+				if zone == 0: world.cone.shadow_enabled = options.high
 		"type":
 			options.big = not options.big
 			ui.big = options.big
@@ -1139,9 +1450,10 @@ func cmd(key: String):
 		"vibration":
 			options.haptic = not options.haptic
 		"voice":
-			options.voice = not options.voice
-			if not options.voice:
-				DisplayServer.tts_stop()
+			options.dub = not options.dub
+			if not options.dub:
+				audio.quiet()
+				spoken_left = 0.
 		"guide":
 			options.guide = not options.guide
 		"settings_back":
@@ -1151,7 +1463,7 @@ func cmd(key: String):
 			mode = "credits"
 			ui.reading(
 				"Emeği geçenler",
-				"ASHEN VALE · SÜRÜM 1.0.0",
+				"ASHEN VALE · 3. ZEYTİN",
 				FileAccess.get_file_as_string("res://licenses/Credits.txt"),
 				"title"
 			)
@@ -1172,7 +1484,7 @@ func cmd(key: String):
 					(
 						s
 						if s != ""
-						else "Yeşil işaretli hatıralara yaklaş ve notu incele. Zorunlu değiller; bulunduğunda burada kalırlar."
+						else "Yolda gözüne takılan mühürlere, yıpranmış eşyalara bak. Her hatıranın yeri bu sayfada kalır."
 					),
 					"journal"
 				)
@@ -1234,7 +1546,7 @@ func cmd(key: String):
 				var i = int(key.trim_prefix("leaf:"))
 				ui.reading(
 					archive.chapters[i].title,
-					"ÜÇÜNCÜ ZEYTİN · ARŞİV",
+					"3. ZEYTİN · ARŞİV",
 					archive.chapters[i].text,
 					"book"
 				)
@@ -1245,7 +1557,20 @@ func cmd(key: String):
 		open_title()
 
 
+func resume_game():
+	if back_mode == "dialog" and line_no < lines.size():
+		mode = "dialog"
+		var ln = lines[line_no]
+		ui.dialogue(ln[0], ln[1], "%02d  /  %02d" % [line_no + 1,lines.size()])
+	else:
+		explore()
+	back_mode = "explore"
+	audio.hold_voice(false)
+
+
 func pause_game():
+	if mode in ["explore","dialog"]: back_mode = mode
+	audio.hold_voice(true)
 	mode = "pause"
 	clear_input()
 	checkpoint()
@@ -1273,7 +1598,7 @@ func show_settings():
 			["Altyazı:  " + ("Büyük" if options.big else "Standart"), "type"],
 			["Ses düzeyi:  %" + str(roundi(options.volume * 100)), "loud"],
 			[
-				"Sistem anlatımı (Türkçe ses gerek):  " + ("Açık" if options.voice else "Kapalı"),
+				"Kayıtlı Türkçe diyalog:  " + ("Açık" if options.dub else "Kapalı"),
 				"voice"
 			],
 			["Titreşim:  " + ("Açık" if options.haptic else "Kapalı"), "vibration"],
@@ -1317,7 +1642,7 @@ func show_book():
 	for i in range(zone + 1):
 		pages.append([archive.chapters[i].title, "leaf:" + str(i)])
 	pages.append(["‹   Defter", "journal"])
-	ui.basic("Üçüncü Zeytin", "ANLATI ARŞİVİ", pages)
+	ui.basic("3. Zeytin", "ANLATI ARŞİVİ", pages)
 
 
 func back():
@@ -1331,9 +1656,9 @@ func back():
 		"explore":
 			pause_game()
 		"pause":
-			explore()
+			resume_game()
 		"dialog":
-			next_line()
+			pause_game()
 		"choice":
 			message("Bir yanıt seç.")
 		"ritual", "chart":
@@ -1351,6 +1676,17 @@ func back():
 func _input(event):
 	if not is_instance_valid(ui):
 		return
+	var touch_down = event is InputEventScreenTouch and event.pressed
+	var mouse_down = (event is InputEventMouseButton and event.pressed
+		and event.button_index == MOUSE_BUTTON_LEFT and event.device != InputEvent.DEVICE_ID_EMULATION)
+	if touch_down or mouse_down:
+		ui.pointer_used(touch_down)
+		if mode == "explore":
+			var action = ui.action_at(event.position)
+			if action != "":
+				cmd(action)
+				get_viewport().set_input_as_handled()
+				return
 	if event is InputEventJoypadButton:
 		ui.pad = true
 		pad_id = event.device
@@ -1360,7 +1696,7 @@ func _input(event):
 				get_viewport().set_input_as_handled()
 			return
 		if event.button_index == JOY_BUTTON_START:
-			if mode == "explore":
+			if mode in ["explore", "dialog"]:
 				pause_game()
 				get_viewport().set_input_as_handled()
 				return
@@ -1369,7 +1705,16 @@ func _input(event):
 				JOY_BUTTON_A:
 					interact()
 				JOY_BUTTON_B:
+					jump()
+				JOY_BUTTON_LEFT_STICK:
+					crouch()
+				JOY_BUTTON_RIGHT_STICK:
 					dodge()
+				JOY_BUTTON_DPAD_UP, JOY_BUTTON_DPAD_RIGHT, JOY_BUTTON_DPAD_DOWN, JOY_BUTTON_DPAD_LEFT:
+					var spell = [JOY_BUTTON_DPAD_UP, JOY_BUTTON_DPAD_RIGHT, JOY_BUTTON_DPAD_DOWN, JOY_BUTTON_DPAD_LEFT].find(event.button_index)
+					if spell in learned:
+						selected = spell
+						cast()
 				JOY_BUTTON_X:
 					run = not run
 				JOY_BUTTON_Y:
@@ -1415,11 +1760,11 @@ func _input(event):
 		get_viewport().set_input_as_handled()
 	elif event is InputEventJoypadMotion:
 		if mode == "explore" and event.axis == JOY_AXIS_TRIGGER_RIGHT:
-			if event.axis_value > .55 and not flags.has("r2down"):
-				flags["r2down"] = true
+			if event.axis_value > .55 and not trigger_down:
+				trigger_down = true
 				cast()
 			elif event.axis_value < .25:
-				flags.erase("r2down")
+				trigger_down = false
 		elif (
 			mode not in ["explore", "ritual"]
 			and event.axis == JOY_AXIS_LEFT_Y
@@ -1465,7 +1810,9 @@ func _input(event):
 				KEY_E, KEY_ENTER:
 					interact()
 				KEY_SPACE:
-					dodge()
+					jump()
+				KEY_C: crouch()
+				KEY_ALT: dodge()
 				KEY_F:
 					cast()
 				KEY_Q:
@@ -1476,7 +1823,6 @@ func _input(event):
 			ui.accept()
 			get_viewport().set_input_as_handled()
 	elif event is InputEventScreenTouch:
-		ui.pad = false
 		if not event.pressed:
 			if event.index == touch_id:
 				touch_id = -1
@@ -1537,18 +1883,6 @@ func set_round(n: int):
 	var at = world.point(row.at)
 	if row.model in World.PEOPLE:
 		world.person_on_set(row.model, at)
-	if beat.kind == "escape" and not is_instance_valid(lookout):
-		lookout = world.person_on_set("Kâtip", world.loc(172, 0))
-		watch_ring = MeshInstance3D.new()
-		var m = TorusMesh.new()
-		m.inner_radius = 3.2
-		m.outer_radius = 3.36
-		m.rings = 36
-		m.ring_segments = 5
-		watch_ring.mesh = m
-		watch_ring.material_override = world.material("#be7950")
-		lookout.add_child(watch_ring)
-		watch_ring.position.y = .08
 	if beat.kind == "paired" and int(row.spell) == 2:
 		practice_disc = MeshInstance3D.new()
 		practice_disc.mesh = world.geometry("rod")
@@ -1609,7 +1943,7 @@ func field_cast() -> bool:
 	var key = ["ember", "water", "shield", "wind"][selected]
 	var at = p + Vector3.UP * .95
 	burst(at, key)
-	audio.fx(key)
+	audio.at(key,at)
 	seal_round(row)
 	hero.gesture("Block" if selected == 2 else "Spellcast_Shoot", .7)
 	return true
@@ -1626,19 +1960,3 @@ func field_frame(dt: float):
 			+ Vector3.UP * sin(course_wave * PI) * .7
 		)
 		practice_disc.rotation.y += dt * 5
-	if beat.kind == "escape" and is_instance_valid(lookout):
-		var p = world.loc(174 + sin(clock * .35) * 5., sin(clock * .48) * 10.)
-		var diff = p - lookout.position
-		lookout.position = p
-		lookout.motion(diff.length() / dt, diff.normalized(), dt)
-		if hero.position.distance_to(p) < 3.25 and velocity.length() > 3.15:
-			var stop = (
-				world.point(trips.escape.stops[round_no - 1].at)
-				if round_no > 0
-				else world.point(beat.at)
-			)
-			hero.position = stop
-			velocity = Vector3.ZERO
-			run = false
-			audio.fx("miss", .64)
-			message("Çakıl ses verdi. Son gölgedesin; yürüyerek geç ya da çemberin dışından dolaş.")

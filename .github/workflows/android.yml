@@ -2,14 +2,14 @@ name: Ashen Vale · Android
 on:
   workflow_dispatch:
   push:
-    branches: [arena/719cd1f5-ashen-vale]
+    branches: [arena/f502d2c5-ashen-vale]
 permissions:
   contents: write
 jobs:
   episode:
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[build:episode1]') || contains(github.event.head_commit.message, '[toolchain:episode1]')
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-java@v5
@@ -19,7 +19,15 @@ jobs:
       - uses: actions/cache@v5
         with:
           path: ~/.cache/ashen-tools/4.4.1
-          key: godot-official-4.4.1-android-v1
+          key: godot-official-4.4.1-android-gradle-v2
+      - name: Cache pinned Gradle distributions and dependency downloads
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.gradle/wrapper/dists
+            ~/.gradle/caches/modules-2
+          key: android-deps-4.4.1-${{ runner.os }}-${{ hashFiles('tools/preview-template.sh') }}
+          restore-keys: android-deps-4.4.1-${{ runner.os }}-
       - run: bash tools/engine.sh
       - name: Build and verify native Android chapter
         if: "!contains(github.event.head_commit.message, '[toolchain:episode1]')"

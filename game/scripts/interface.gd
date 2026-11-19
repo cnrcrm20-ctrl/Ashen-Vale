@@ -6,7 +6,7 @@ signal board_sound(key: String)
 var board
 var board_hint: Label
 signal ritual_done
-const ART = preload("res://art/first_light.jpg")
+const GLASS = preload("res://shaders/glass.gdshader")
 const SERIF = preload("res://fonts/display.ttf")
 const SANS = preload("res://fonts/sans.ttf")
 const Ritual = preload("res://scripts/ritual.gd")
@@ -19,7 +19,9 @@ var hud: Control
 var shot: Control
 var objective: Label
 var place: Label
-var distance_label: Label
+var subtitle: Label
+var sub_panel: Panel
+var action_buttons: Dictionary = {}
 var prompt: Button
 var movehint: Label
 var cycle_button: Button
@@ -33,7 +35,13 @@ var ritual
 var rit_hint: Label
 var rit_button: Button
 var big = false
-var pad = false
+# The most recent hint style is not an exclusive input mode. Keep the action
+# layer on Android and on desktops where a real touchscreen was observed.
+var touch_surface = OS.has_feature("mobile")
+var pad = false:
+	set(value):
+		pad = value
+		sync_dial()
 var scene_badge: Label
 var scroll: ScrollContainer
 
@@ -171,13 +179,6 @@ func new_page():
 
 func title(saved: bool, completed: bool):
 	new_page()
-	var im = TextureRect.new()
-	im.texture = ART
-	im.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	im.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	im.mouse_filter = MOUSE_FILTER_IGNORE
-	page.add_child(im)
-	cover(im)
 	grad(
 		page,
 		[
@@ -192,7 +193,7 @@ func title(saved: bool, completed: bool):
 	rect(p, .069, .102, .65, .16)
 	p = label(page, "ASHEN VALE", 78, CREAM, true)
 	rect(p, .065, .18, .76, .36)
-	p = label(page, "BİRİNCİ BÖLÜM    ─    ÜÇÜNCÜ ZEYTİN", 20, GOLD)
+	p = label(page, "BİRİNCİ BÖLÜM    ─    3. ZEYTİN", 20, GOLD)
 	rect(p, .072, .355, .68, .41)
 	p = label(page, "İki dünya arasında, bir çocuğun adı.", 25, CREAM, true)
 	rect(p, .07, .423, .78, .49)
@@ -219,8 +220,32 @@ func title(saved: bool, completed: bool):
 		opt = button(page, "YENİ KAYIT", bindcmd("confirm_new"))
 		rect(opt, .07, .57, .07, .57, 0, 139, 155, 185)
 		choices.append(opt)
-	p = label(page, "I   /   VII       •       ÜÇOLUK'TAN VADİYE", 15, MUTED)
+	p = label(page, "KALKSTEIN   ·   KANDİLLER SÖNÜNCE", 15, MUTED)
 	rect(p, .07, .91, .75, .96)
+
+
+func hud_button(parent: Control, text: String, key: String, primary = false) -> Button:
+	var b = button(parent, text, bindcmd(key), primary)
+	b.mouse_filter = MOUSE_FILTER_IGNORE  # Hardware mouse and each touch index are routed only once.
+	b.focus_mode = FOCUS_NONE
+	action_buttons[key] = b
+	return b
+
+
+func action_at(pos: Vector2) -> String:
+	for key in action_buttons:
+		var b: Button = action_buttons[key]
+		if b.is_visible_in_tree() and not b.disabled and b.get_global_rect().has_point(pos):
+			return key
+	return ""
+
+
+func caption(text: String):
+	if not is_instance_valid(subtitle): return
+	sub_panel.visible = text != ""
+	if subtitle.text != text:
+		subtitle.add_theme_font_size_override("font_size", 26 if big else 22)
+		subtitle.text = text
 
 
 func prepare_hud():
@@ -235,45 +260,46 @@ func prepare_hud():
 	objective = label(bar, "", 21, CREAM, true)
 	rect(objective, 0, 0, 1, 1, 17, 27, -13, -6)
 	objective.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	var btn = button(hud, "≡   DEFTER", bindcmd("journal"))
+	var btn = hud_button(hud, "Defter", "journal")
 	rect(btn, 1, 0, 1, 0, -234, 23, -90, 75)
 	btn.focus_mode = FOCUS_NONE
-	btn = button(hud, "Ⅱ", bindcmd("pause"))
+	btn = hud_button(hud, "Ⅱ", "pause")
 	rect(btn, 1, 0, 1, 0, -81, 23, -25, 75)
 	btn.focus_mode = FOCUS_NONE
 	marker = label(hud, "◇", 34, GOLD)
 	marker.size = Vector2(42, 42)
 	marker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	distance_label = label(hud, "", 17, CREAM)
-	for n in [marker, distance_label]:
-		n.add_theme_constant_override("outline_size", 3)
-		n.add_theme_color_override("font_outline_color", Color("393c35"))
-	distance_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	distance_label.size = Vector2(100, 33)
 	dial = layer(hud)
 	joy = panel(dial, Color(.04, .13, .13, .33), Color(CREAM, .42), 80)
 	rect(joy, 0, 1, 0, 1, 40, -194, 193, -41)
 	stick = panel(joy, Color(.81, .78, .64, .28), Color(CREAM, .68), 40)
 	stick.size = Vector2(53, 53)
 	stick.position = Vector2(50, 50)
-	btn = button(dial, "Koş", bindcmd("sprint"))
+	btn = hud_button(dial, "Koş", "sprint")
 	rect(btn, 0, 1, 0, 1, 202, -99, 283, -48)
 	btn.focus_mode = FOCUS_NONE
-	prompt = button(dial, "Etkileş", bindcmd("interact"), true)
+	prompt = hud_button(dial, "Etkileş", "interact", true)
 	rect(prompt, 1, 1, 1, 1, -230, -113, -30, -49)
 	prompt.focus_mode = FOCUS_NONE
-	cast_button = button(dial, "Büyü", bindcmd("cast"))
+	cast_button = hud_button(dial, "Büyü", "cast")
 	rect(cast_button, 1, 1, 1, 1, -230, -179, -106, -125)
 	cast_button.focus_mode = FOCUS_NONE
-	btn = button(dial, "↻", bindcmd("cycle"))
+	btn = hud_button(dial, "↻", "cycle")
 	cycle_button = btn
 	rect(btn, 1, 1, 1, 1, -97, -179, -30, -125)
 	btn.focus_mode = FOCUS_NONE
-	btn = button(dial, "Atıl", bindcmd("dodge"))
+	btn = hud_button(dial, "Atla", "jump")
 	rect(btn, 1, 1, 1, 1, -330, -113, -241, -49)
 	btn.focus_mode = FOCUS_NONE
-	var legend = panel(hud, Color(.035, .075, .08, .77), Color(GOLD, .22), 14)
-	rect(legend, .285, 1, .715, 1, 0, -47, 0, -12)
+	btn = hud_button(dial, "Eğil", "crouch")
+	rect(btn, 0, 1, 0, 1, 202, -160, 283, -107)
+	sub_panel = panel(hud, Color(.04, .065, .077, .89), Color(GOLD, .37), 7)
+	rect(sub_panel, .16, 1, .82, 1, 0, -266, 0, -188)
+	subtitle = label(sub_panel, "", 22, CREAM, true)
+	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	rect(subtitle, 0, 0, 1, 1, 12, 5, -12, -5)
+	sub_panel.hide()
 	movehint = label(hud, "", 17, CREAM)
 	rect(movehint, .23, 1, .77, 1, 0, -47, 0, -12)
 	movehint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -282,10 +308,19 @@ func prepare_hud():
 	scene_badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 
+func sync_dial():
+	if is_instance_valid(dial): dial.visible = touch_surface or not pad
+
+
+func pointer_used(touch: bool):
+	touch_surface = touch_surface or touch
+	pad = false  # Reveal on the very same press, before action_at hit testing.
+
+
 func gameplay():
 	wipe()
 	hud.show()
-	dial.visible = not pad
+	sync_dial()
 
 
 func set_goal(area: String, task: String):
@@ -299,26 +334,15 @@ func guidance(where: Vector2, meters: float, near: bool, act: String, sname: Str
 	var w = get_viewport_rect().size
 	var p = where.clamp(Vector2(35, 120), w - Vector2(40, 156))
 	marker.position = p - Vector2(21, 23)
-	distance_label.position = p + Vector2(-50, 15)
-	distance_label.text = "%d m" % roundi(meters)
-	marker.visible = meters > 2
-	distance_label.visible = meters > 2
-	prompt.text = act if near else "Hedefe git"
+	marker.visible = meters > 3.2
+	prompt.text = act
+	prompt.visible = near
 	prompt.disabled = not near
 	cast_button.text = sname if sname != "" else "Büyü yok"
 	cast_button.disabled = sname == ""
 	cast_button.visible = sname != ""
 	cycle_button.visible = sname != ""
-	movehint.text = (
-		extra
-		if extra != ""
-		else (
-			"✕  " + act + "     ○  Atıl     R2  Büyü     L1/R1  Seç"
-			if pad
-			else "Sol: yürü    •    Sağda sürükle: bakış"
-		)
-	)
-	dial.visible = not pad
+	movehint.text = extra if extra != "" else ("✕  " + act if pad and near else "")
 
 
 func stick_pos(v: Vector2):
@@ -344,7 +368,13 @@ func dialogue(speaker: String, text: String, count: String):
 	new_page()
 	var g = grad(page, [Color.TRANSPARENT, Color.TRANSPARENT, Color(.025, .065, .065, .55)], true)
 	g.mouse_filter = MOUSE_FILTER_IGNORE
-	var p = panel(page, Color(.043, .10, .108, .97), Color(GOLD, .55), 12)
+	var letterbox = panel(page, Color(.017, .022, .027, .9), Color.TRANSPARENT, 0)
+	rect(letterbox, 0, 0, 1, .035)
+	var pause_b = button(page, "Ⅱ", bindcmd("pause"))
+	rect(pause_b,1,0,1,0,-79,30,-24,78)
+	pause_b.focus_mode = FOCUS_NONE
+	var p = panel(page, Color(.043, .10, .108, .85), Color(GOLD, .55), 7)
+	frost(p)
 	rect(p, .065, 1, .935, 1, 0, -234, 0, -27)
 	var l = label(p, "◆   " + speaker.replace("i", "İ").to_upper(), 19, GOLD)
 	rect(l, 0, 0, .72, 0, 25, 10, 0, 45)
@@ -360,12 +390,23 @@ func dialogue(speaker: String, text: String, count: String):
 	b.grab_focus()
 
 
+func frost(parent: Panel):
+	var glass = ColorRect.new()
+	glass.mouse_filter = MOUSE_FILTER_IGNORE
+	parent.add_child(glass)
+	rect(glass, 0, 0, 1, 1, 2, 2, -2, -2)
+	var m = ShaderMaterial.new()
+	m.shader = GLASS
+	glass.material = m
+
+
 func sheet(title_: String, subtitle: String):
 	new_page()
 	var shade = panel(page, Color(.025, .055, .06, .72))
 	cover(shade)
 	var p = panel(page, Color(.052, .115, .12, .98), Color(GOLD, .65), 16)
 	rect(p, .14, .075, .86, .925)
+	frost(p)
 	var q = label(p, subtitle.to_upper(), 16, GOLD)
 	rect(q, .055, .045, .94, .10)
 	q = label(p, title_, 36, CREAM, true)
@@ -375,7 +416,7 @@ func sheet(title_: String, subtitle: String):
 
 
 func question(q: String, opts: Array):
-	var p = sheet(q, "İLYAN'IN SÖZÜ     /     KARAR")
+	var p = sheet(q, "LYANDER'İN SÖZÜ     /     KARAR")
 	var y = .31
 	for i in range(opts.size()):
 		var idx = i

@@ -1,8 +1,24 @@
 shader_type spatial;
 render_mode cull_disabled;
-uniform float district=0.;
+uniform float district;
+uniform sampler2D loam : source_color, repeat_enable, filter_linear_mipmap;
+uniform sampler2D flags : source_color, repeat_enable, filter_linear_mipmap;
+uniform sampler2D soil_normal : hint_normal, repeat_enable, filter_linear_mipmap;
+uniform sampler2D flags_normal : hint_normal, repeat_enable, filter_linear_mipmap;
+uniform sampler2D soil_orm : repeat_enable, filter_linear_mipmap;
+uniform sampler2D flags_orm : repeat_enable, filter_linear_mipmap;
 varying vec3 place;
-float h(vec2 p){return fract(sin(dot(p,vec2(27.13,91.73)))*4375.23);}
-float grain(vec2 p){vec2 a=floor(p), f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(a),h(a+vec2(1,0)),f.x),mix(h(a+vec2(0,1)),h(a+1.),f.x),f.y);}
-void vertex(){place=(MODEL_MATRIX*vec4(VERTEX,1.)).xyz;}
-void fragment(){vec2 p=place.xz;float c=sin(-p.y*.022+district*.77)*10.+sin(-p.y*.05+district)*2.6;float path=(1.-smoothstep(2.7,4.7,abs(p.x-c)+grain(p*.6)*.6));vec2 q=vec2((p.x-c)*1.3,p.y*1.32);q.x+=mod(floor(q.y),2.)*.5+grain(p*.38)*.23;vec2 uv=abs(fract(q)-.5);float seam=smoothstep(.425,.497,max(uv.x,uv.y));float flag=(.91+.12*h(floor(q)))-seam*.19;float mottled=.9+.12*grain(p*.43)+.08*grain(p*3.);ALBEDO=COLOR.rgb*mix(mottled,flag*mottled,path*.9);ROUGHNESS=.92;}
+void vertex(){ place=(MODEL_MATRIX*vec4(VERTEX,1.0)).xyz; }
+void fragment(){
+ vec2 p=place.xz;
+ float center=sin(-p.y*.022+district*.77)*10.+sin(-p.y*.05+district)*2.6;
+ float road=1.-smoothstep(2.1,4.7,abs(p.x-center)+.32*sin(p.y*.7));
+ if(district==2.) road*=smoothstep(24.,58.,-p.y);
+ vec2 a=p*.261, b=p*.38;
+ float patch=.5+.27*sin(p.x*.18+p.y*.11)+.17*cos(p.x*.09-p.y*.17);
+ vec3 moss=mix(vec3(.46,.55,.36),vec3(.67,.62,.53),patch);
+ ALBEDO=mix(texture(loam,a).rgb*moss,texture(flags,b).rgb*vec3(.66,.64,.59),road);
+ NORMAL_MAP=mix(texture(soil_normal,a).rgb,texture(flags_normal,b).rgb,road);
+ vec3 orm=mix(texture(soil_orm,a).rgb,texture(flags_orm,b).rgb,road);
+ NORMAL_MAP_DEPTH=.45; SPECULAR=.19; AO=orm.r; ROUGHNESS=mix(max(.35,orm.g),max(.30,orm.g*.74),road);
+}

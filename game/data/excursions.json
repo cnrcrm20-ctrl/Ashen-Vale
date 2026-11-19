@@ -1,73 +1,4 @@
 {
- "escape": {
-  "zone": 0,
-  "stops": [
-   {
-    "at": [
-     166,
-     -11
-    ],
-    "model": "chest",
-    "task": "Ketenlerin gölgesinde ayakkabını bağla",
-    "lines": [
-     [
-      "İlyan",
-      "Çarığın bağı bozuldu. Durup eğilmek, avluda doğrulup yürümekten zor. Buradan bakınca büyüklerin ayaklarını tanıyorum: Hedi sol ayağını düşünmeden içe basıyor, kâtipse kil kokmasın diye bastığı yeri seçiyor."
-     ],
-     [
-      "Mina",
-      "Seni görmedim, diyorum. Şu bezi katlarken iki gözüm de dolu zaten. Kuyruğun ucu cebinden çıkmış. İçeri it, ses etmesin."
-     ]
-    ],
-    "spell": -1
-   },
-   {
-    "at": [
-     179,
-     8
-    ],
-    "model": "stall",
-    "task": "Bostan arabasının sessiz yanından geç",
-    "lines": [
-     [
-      "İlyan",
-      "Arabanın bir tekeri sabunla yağlanmış, öteki gıcırdıyor. Tekerine abanırsam bütün avlu döner. Kımıldatmadan geçebileceğim kadar boşluk var. Mina bana yol açmadı. Bakışını başka yere çevirdi, o kadar."
-     ]
-    ],
-    "spell": -1
-   },
-   {
-    "at": [
-     165,
-     9
-    ],
-    "model": "desk",
-    "task": "Boya taşından dönüş işaretini bul",
-    "lines": [
-     [
-      "İlyan",
-      "Duvarın bu yüzünde parmağım çivit oldu. İncirin gölgesi hangi yana düşüyorsa pazar o yandaydı. Hedi bir gün yolumu kaybedersem eve böyle döneyim diye öğretmişti. Şimdi ilk defa tersini kullanıyorum."
-     ]
-    ],
-    "spell": -1
-   },
-   {
-    "at": [
-     190,
-     -6
-    ],
-    "model": "gate",
-    "task": "Çeşme gölgesinde avluyu arkanda bırak",
-    "lines": [
-     [
-      "İlyan",
-      "Kâtibin ne yazacağını artık ben belirleyemem. Ama bugün gitmediğim bir iskeleye varmış gibi de yaşamayacağım. Bir kapıdan çıkmakta gürültü yokmuş. İçimdekinin hepsini ben yapıyorum."
-     ]
-    ],
-    "spell": -1
-   }
-  ]
- },
  "witness": {
   "zone": 2,
   "stops": [
@@ -76,19 +7,19 @@
      91,
      -10
     ],
-    "model": "Tamar",
+    "model": "Aldric",
     "task": "Çizmeyi su taşıyanın yanında karşılaştır",
     "lines": [
      [
-      "Tamar",
+      "Aldric",
       "Şu sağ çizmenin altına bak. Eşik suyu ek yerine giriyor. Yukarı'da herkes beni mucize yapıyor sanıyor; burada her hafta taban isteyen adamım. Sözümü değil izi dinlersen bir gün ben de yanıldığımda anlarsın."
      ],
      [
-      "İlyan",
+      "Lyander",
       "Senin sözüne güvenmekle ayağının altına bakmak arasında seçim yapmak zorunda değil miyim?"
      ],
      [
-      "Tamar",
+      "Aldric",
       "Değilsin. Güvendiğin insanın ayakkabısı da delinebilir. Onu değirmencinin yanında bulacaksın. Sırtını bana değil çeşmeye ver; köprüyü oradan görürsün."
      ]
     ],
@@ -107,8 +38,8 @@
       "Astarı zeytinyağıyla ovduk. Kuru çizme diye kendi sağ elimle mühürlesem ertesi gün su almaz mı? Alır. Ona bir çift diyeceğine bir sağ de. Bir çift versem solunu yine yeni sanıp fırına atar."
      ],
      [
-      "İlyan",
-      "Üçoluk'ta pelerinini görünce aklımdan kimsenin onunla böyle konuşabileceği geçmedi. Biri geçidi açıyor diye bütün çizmelerini de kendisi onaracak değil ya."
+      "Lyander",
+      "Trias Vadisi'nde pelerinini görünce aklımdan kimsenin onunla böyle konuşabileceği geçmedi. Biri geçidi açıyor diye bütün çizmelerini de kendisi onaracak değil ya."
      ]
     ],
     "spell": -1
@@ -126,12 +57,12 @@
       "Şu küpü içinde duran çırak döndürüyor. Islak ayağını çamura koymasın diye bir tahta verdim. İçeride karanlık olunca duvarın ne kadar kaldığını ışığa tutarak değil eliyle ölçüyor. Dışarıdan bakarak bunu ben de söyleyemem."
      ],
      [
-      "İlyan",
-      "Ben de küçük bir balık pişirdim. Boynu kopunca Mina yüzgeci ince tuttun dedi. Annem çömlekçiymiş. Birinin annesinin mesleğini, kendi eli kirlenince öğrenmesi tuhaf mı?"
+      "Lyander",
+      "Ben de küçük bir balık pişirdim. Boynu kopunca Lyra yüzgeci ince tuttun dedi. Annem çömlekçiymiş. Birinin annesinin mesleğini, kendi eli kirlenince öğrenmesi tuhaf mı?"
      ],
      [
       "Çömlekçi",
-      "Kilin buna itirazı olacağını sanmam. Şu kuru sazı al. Mektubu yağlı astara çıplak koyarsan akşam harflerin yarısı Tamar'ın sırtında yürür."
+      "Kilin buna itirazı olacağını sanmam. Şu kuru sazı al. Mektubu yağlı astara çıplak koyarsan akşam harflerin yarısı Aldric'in sırtında yürür."
      ]
     ],
     "spell": -1
@@ -149,7 +80,7 @@
       "Bir yerin adını yanlış yazarsan mektup bazen yine ulaşır; ama onu bekleyen insan yanlış yerde kalır. İlk cümleni balmumuna yaz, silmeye utanma. Çıraklığımda üç kere kendi sokağımı yanlış yazdım."
      ],
      [
-      "İlyan",
+      "Lyander",
       "Önce balığın hangi parçasının bende olduğunu mu yazmalıyım, küplerin ne kadar büyük olduğunu mu? Onu ilk okuyacak kişi cevabını yazabilecek kadar bilgi bulmalı."
      ]
     ],
@@ -165,19 +96,19 @@
      71,
      -9
     ],
-    "model": "Oris",
-    "task": "Oris’ten boş hane için kil al",
+    "model": "Dorian",
+    "task": "Dorian’dan boş hane için kil al",
     "lines": [
      [
-      "Oris",
+      "Dorian",
       "Şu üç ölçü birbirine benzemez. Sarn'ınki ateş görmüş, Ovaş'ınkinin ağzı yamuk, Meret'inki deniz taşından. Sabah hepsine aynı suyu doldururuz. Başka kabı olduğu için birini okuldan çıkarırsak ölçüm yapmamış oluruz."
      ],
      [
-      "İlyan",
+      "Lyander",
       "Bana hangi kabı vereceksin? Buraya geçmek için hiçbir kralın adını söylemedim."
      ],
      [
-      "Oris",
+      "Dorian",
       "Önce şu kuru kili al. İyi bir kâtip yer bulamadığında insanı satırın dışına yazmaz. Elinde bir kil varken boşa küfretmeye de gerek yok."
      ]
     ],
@@ -192,11 +123,11 @@
     "task": "Üç sütunun altındaki boşluğu ölç",
     "lines": [
      [
-      "İlyan",
+      "Lyander",
       "Parmaklarımı aralayıp ölçüyorum. Bir ad için yer var, bir memleket için de. Üç krallığın hiçbirinden gelmediğini yazmak için neden dördüncü bir krallık icat etmek gereksin?"
      ],
      [
-      "Ekin",
+      "Ariadne",
       "Ben olsam sana ayrı levha çıkarırlardı derdim. Ama o zaman yarın seni arayan biri hangi duvara bakacağını bilemez. Aynı duvarda kalması daha iyi."
      ]
     ],
@@ -207,19 +138,19 @@
      91,
      10
     ],
-    "model": "Ekin",
-    "task": "Ekin’le önlük tahtalarını karşılaştır",
+    "model": "Ariadne",
+    "task": "Ariadne’yle önlük tahtalarını karşılaştır",
     "lines": [
      [
-      "Ekin",
+      "Ariadne",
       "Şuradaki çivi başı dışarı çıkmış. Ben önlüğü bir kere oraya astım, çekip alınca okulun en büyük kol deliği bende kaldı. Sana sağlamını göstermek için iyi biri olmam gerekmez. Aynı hataya iki kişi düşmesin yeter."
      ],
      [
-      "İlyan",
+      "Lyander",
       "Sen burada herkese böyle mi yol tarif ediyorsun?"
      ],
      [
-      "Ekin",
+      "Ariadne",
       "Yok. Bazılarına bilerek uzun tarif ediyorum. Onlar haritaya bakmadan bana nerede yanıldığımı söylüyorlar. Sen daha bana bakıp benim de bir şey öğrenmeye geldiğimi anladın mı?"
      ]
     ],
@@ -230,16 +161,16 @@
      58,
      -11
     ],
-    "model": "Oris",
+    "model": "Dorian",
     "task": "Aynı sicile konuk kaydını bırak",
     "lines": [
      [
-      "Oris",
+      "Dorian",
       "Kenar kurudu. Kandile kadar burada konuk yazacak. Ne daha aşağı ne daha yukarı. Hangi işi yaptığını görmeden dosyayı bitirsem bunun adına düzen demezdim."
      ],
      [
-      "İlyan",
-      "Kireçdam'da en sonunda kuru kil gördüğümde korktum. Burada bir satırın boş kalabilmesi iyiymiş. Biri benim yerime en başından kazımamış."
+      "Lyander",
+      "Kalkstein'da en sonunda kuru kil gördüğümde korktum. Burada bir satırın boş kalabilmesi iyiymiş. Biri benim yerime en başından kazımamış."
      ]
     ],
     "spell": -1
@@ -258,11 +189,11 @@
     "task": "Yağlı kandilin yanına gel ve uygun büyüyü bırak",
     "lines": [
      [
-      "Ekin",
+      "Ariadne",
       "Bu sefer bana bakmadın diye sevindim. Kabı gösterirken yanlışlıkla kurusunu işaret etmiştim. Sen ışığı benim parmağıma değil yağa tuttun. Kayda kendi yanlışımı da koyuyorum."
      ],
      [
-      "İlyan",
+      "Lyander",
       "İkimiz aynı şeyi söyledik diye iki ayrı tanık olmuyoruz demek. Önce iki ayrı yere bakmayı öğrenmek gerekiyormuş."
      ]
     ],
@@ -277,11 +208,11 @@
     "task": "Taş künkün yanında Dipses ile ikinci okumayı al",
     "lines": [
      [
-      "İlyan",
+      "Lyander",
       "Burada bir ses vardı diyebilirim. Burada su vardı diyemem. Tutarken elimin titremesiyle künkün içinden geçen birbirinden ayrı; ben bile kolay karıştırıyorum."
      ],
      [
-      "Ekin",
+      "Ariadne",
       "Kalemin ucunu bu aralığa koydum. Sen bana sonucu söylemeden önce ben de çizdim. Artık bana uymak için kendini değiştiremezsin. Kıyaslamak için yan yanayız."
      ]
     ],
@@ -296,11 +227,11 @@
     "task": "Yün disk yaklaşırken kavisini Siper ile kur",
     "lines": [
      [
-      "Ruva",
+      "Magnus",
       "İki kişiyi birden korumaya çalışınca kavisi fazla ileri aldın. Bak, disk yarısını yokladı. Bütün avluyu örtecek kadar güçlü olman gerekmiyor. Bir tek kişiye doğru yerde durman yetti."
      ],
      [
-      "İlyan",
+      "Lyander",
       "Üç deneme yapınca sonuncusu ilkinden kısa sürdü. Daha çok güç çıkardım sandım. Meğer ilkinde neyi beklediğimi bile bilmiyormuşum."
      ]
     ],
@@ -315,12 +246,12 @@
     "task": "Sepete dönüp Yel Avucu ile diski gönder",
     "lines": [
      [
-      "Ekin",
+      "Ariadne",
       "İlk gün şu sepeti haritaya çizsem kapı gibi yapardım; içine düşünce geçilir sanırdın. Oysa arkasında duvar var. Senin yolladığın disk onu bana çizgiden daha iyi öğretti."
      ],
      [
-      "Ruva",
-      "Dördünü de yaptın diye dört ayrı dersten mezun olmadın. Bunun adı başka bir yerde tekrar denemeye izin. Yarın rüzgâr sizden eserse bu atış şeyi ispatlamaz: suyun kendi kendine nereye gittiğini."
+      "Magnus",
+      "Dördünü de yaptın diye dört ayrı dersten mezun olmadın. Bunun adı başka bir yerde tekrar denemeye izin. Yarın da diski itersin. Ama kendi yelini kesmeden suyun hangi yana aktığını bilemezsin."
      ]
     ],
     "spell": 3

@@ -7,7 +7,7 @@ def tone(note,dur,kind):
  t=np.arange(int(dur*sr))/sr;f=440*2**((note-69)/12);w=2*np.pi*f*t
  if kind=='lyre':return (np.sin(w)+.53*np.sin(2*w+.2)+.28*np.sin(3*w)+.13*np.sin(5*w))*np.exp(-t*2.8)*(1-np.exp(-t*90))
  return (np.sin(w+.12*np.sin(2*np.pi*4.7*t))+.2*np.sin(2*w))*(1-np.exp(-t*3))*np.minimum(1,(dur-t)*2)*(.8+.14*np.sin(t*5))
-for num,name in enumerate(['kirecdam','vadi','olcu']):
+for num,name in enumerate(['kalkstein','vadi','olcu']):
  beat=[.69,.77,.64][num];length=beat*96;out=np.zeros((int(sr*length),2)); key=[50,53,55][num];mel=[0,7,10,9,5,3,0,2,7,5,3,2,0,5,7,3];
  def add(a,pos,pan,vol):
   for delay,v in [(0,1),(.16,.18),(.37,.11),(.68,.065)]:

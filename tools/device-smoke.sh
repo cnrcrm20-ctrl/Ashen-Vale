@@ -27,6 +27,11 @@ adb start-server
 "$E" -version | head -8 || true
 "$E" -accel-check || true
 ls -l /dev/kvm || true
+# Historical 1.0.0 is GLES. For the Vulkan preview exercise the actual
+# Mobile renderer on a Vulkan-enabled AVD instead of advertising hardware
+# that was deliberately disabled by the old emulator command line.
+vk_feature=-Vulkan
+if [[ ${EMULATOR_VULKAN:-off} == on ]]; then vk_feature=Vulkan; fi
 "$E" @"$AVD" -port 5554 -memory 2048 -cores 2 -no-window -no-snapshot -no-audio -no-boot-anim -gpu "${EMULATOR_GPU:-host}" -feature -Vulkan -camera-back none -camera-front none >"$AVDLOG" 2>&1 & EMUPID=$!
 finish(){ timeout 5 adb logcat -d -s 'godot:I' 'Godot:I' 'AndroidRuntime:E' >"$D/game.log" 2>&1 || :; tail -50 "$D/game.log" || :; tail -35 "$AVDLOG" || :; timeout 4 adb emu kill >/dev/null 2>&1 || :; kill "$EMUPID" 2>/dev/null || :; }; trap finish EXIT
 boot=no
@@ -37,8 +42,27 @@ for n in {1..95}; do
 done
 [[ $boot == yes ]] || { echo '::error::Android boot timeout';tail -80 "$AVDLOG";exit 1; }
 echo '::notice::AOSP API 31 booted'
+if [[ $vk_feature == Vulkan ]]; then
+  adb shell pm list features | grep -F 'android.hardware.vulkan'
+  timeout 15 adb shell cmd gpu vkjson >"$D/vulkan.json" 2>&1 || :
+fi
 adb shell settings put secure immersive_mode_confirmations confirmed; adb shell wm dismiss-keyguard; adb shell wm size 720x1280; adb shell wm density 240; adb shell input keyevent 82; adb shell settings put system accelerometer_rotation 0
-timeout 80 adb install "$APK"; PK=com.ashenvale.episodeone; ACT=$(adb shell cmd package resolve-activity --brief "$PK" | tail -1 | tr -d '\r'); [[ $ACT == $PK/* ]]
+# Keep historical 1.0.0 testable but never install an unrelated application.
+PK=$("$BT/aapt" dump badging "$APK" | sed -n "s/^package: name='\([^']*\)'.*/\1/p")
+case "$PK" in com.ashenvale.episodeone|com.ashenvale.episodeone.preview) ;; *) echo 'Unexpected application ID'; exit 1;; esac
+if [[ -n ${ASHEN_STABLE_REFERENCE:-} ]]; then
+  [[ "$PK" == com.ashenvale.episodeone.preview ]]
+  echo "$(python3 -c 'import json; print(json.load(open("delivery/episode1.json"))["sha256"])')  $ASHEN_STABLE_REFERENCE" | sha256sum -c -
+  timeout 80 adb install "$ASHEN_STABLE_REFERENCE"
+fi
+timeout 80 adb install "$APK"
+if [[ -n ${ASHEN_STABLE_REFERENCE:-} ]]; then
+  uid_for(){ adb shell pm list packages -U --user 0 "$1" | tr -d '\r' | awk -v pkg="package:$1" '$1==pkg {sub(/^uid:/,"",$2); print $2}'; }
+  stable_uid=$(uid_for com.ashenvale.episodeone); preview_uid=$(uid_for "$PK")
+  [[ $stable_uid =~ ^[0-9]+$ && $preview_uid =~ ^[0-9]+$ && $stable_uid != "$preview_uid" ]]
+  echo 'ANDROID_PARALLEL_INSTALL PASS · isolated stable and preview application IDs and UIDs'
+fi
+ACT=$(adb shell cmd package resolve-activity --brief "$PK" | tail -1 | tr -d '\r'); [[ $ACT == $PK/* ]]
 wait_mark(){ local m=$1; echo "Waiting for $m"; for n in {1..55}; do if timeout 5 adb logcat -d -s 'godot:I' 'Godot:I' | grep -F "$m" >/dev/null; then return 0; fi; sleep 1; done; echo "Missing Android state $m";return 1; }
 shot(){ adb exec-out screencap -p >"$ROOT/build/shots/android-$1.png"; }
 launch(){ adb logcat -c;timeout 35 adb shell am start -W -n "$ACT"; wait_mark 'AV_READY title';sleep 1; }
@@ -46,6 +70,16 @@ launch;shot title
 read -r W H < <(python3 -c 'import struct;print(*struct.unpack(">II",open("build/shots/android-title.png","rb").read()[16:24]))'); [[ $W -gt $H ]]
 tap(){ adb shell input tap "$((W*$1/100))" "$((H*$2/100))"; }
 tap 14 70;wait_mark 'AV_MENU settings';adb shell input keyevent 4; sleep 1; tap 17 61;wait_mark 'AV_BEAT 0';wait_mark 'AV_WALK';sleep 1;shot court
+# The released 1.0.0 begins beside the bowl. The new cut begins on foot.
+# Inspect the installed package, so the signed historical screencheck remains reproducible.
+VER=$(adb shell dumpsys package "$PK" | sed -n 's/.*versionName=//p' | head -1 | tr -d '\r')
+if [[ "$VER" != 1.0.0 ]]; then
+  for n in {1..9}; do
+    if adb logcat -d -s 'godot:I' 'Godot:I' | grep -F 'AV_NEAR Lyra' >/dev/null; then break; fi
+    adb shell input swipe "$((W*12/100))" "$((H*80/100))" "$((W*9/100))" "$((H*60/100))" 630
+  done
+  wait_mark 'AV_NEAR Lyra'
+fi
 tap 90 89;wait_mark 'AV_LINE 0:0';sleep 1;shot dialogue
 for n in 1 2 3; do tap 86 93;sleep .5;done; wait_mark 'AV_BEAT 1'
 # A real touch drag, not a debug teleport. Android save/resume is exercised by process death.
@@ -53,5 +87,15 @@ adb shell input swipe "$((W*11/100))" "$((H*81/100))" "$((W*14/100))" "$((H*58/1
 adb logcat -d -s "godot:I" "Godot:I" >"$D/first-launch.log";adb shell input keyevent 3;sleep 1;adb shell am force-stop "$PK";launch;tap 17 61;wait_mark 'AV_BEAT 1'; wait_mark 'AV_WALK';adb shell pidof "$PK";shot resumed
 adb logcat -d -s 'godot:I' 'Godot:I' >"$D/resume.log"
 python3 tools/check-android-frames.py "$ROOT/build/shots" | tee "$D/frames.log"
-if grep -E 'Program linking failed|SHADER ERROR|SCRIPT ERROR:|FATAL EXCEPTION' "$D/first-launch.log" "$D/resume.log";then echo '::error::Android shader or script failure';exit 1;fi
+if grep -E 'Program linking failed|SHADER ERROR|SCRIPT ERROR:|FATAL EXCEPTION|Failed loading resource: res://|No loader found for resource: res://' "$D/first-launch.log" "$D/resume.log";then echo '::error::Android shader, script or packaged resource failure';exit 1;fi
+if [[ $PK == com.ashenvale.episodeone.preview ]]; then
+  if grep -Fq 'AV_GRAPHICS startup=gles3' "$D/first-launch.log"; then
+    grep -E 'OpenGL API .*3[.][0-9].*Compatibility - Using Device: .*[[:alnum:]]' "$D/first-launch.log"
+    echo 'ANDROID_RENDERER PASS · GLES3 selected before surface creation'
+  else
+    grep -Fq 'AV_GRAPHICS startup=vulkan-mobile' "$D/first-launch.log"
+    grep -Ei 'Vulkan [0-9].*Mobile' "$D/first-launch.log"
+    echo 'ANDROID_RENDERER PASS · Vulkan Mobile with an accessible device'
+  fi
+fi
 echo 'ANDROID_SMOKE PASS · signed install / title / settings / walk / touch dialogue / movement / process death / resume'

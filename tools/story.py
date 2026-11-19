@@ -1,33 +1,93 @@
-"""Compile the chapter's authoring sheet and the canonical novel to offline game data."""
+"""Compile the authoring sheet, recorded takes and novel into the offline game."""
+import json
+import re
+import sys
 from pathlib import Path
-import json,re,sys
-root=Path(__file__).resolve().parents[1]; data=root/'game/data'; data.mkdir(exist_ok=True)
-book=(root/'episode-1.md').read_text(); prose,appendix=book.split('\n---\n',1)
-zones=[]; beats=[]; current=None
-for line in (root/'story/episode1.av').read_text().splitlines():
- line=line.strip()
- if not line or line.startswith('#'):continue
- if line.startswith('@'):
-  n,sub=line[1:].split('|');zones.append({'name':n,'subtitle':sub})
- elif line.startswith(':'):
-  loc,model,kind,title=line[1:].split('|');loc=[float(a) for a in loc.split(',')];current=dict(id=len(beats),zone=len(zones)-1,at=loc,model=model,kind=kind,title=title,lines=[],clues=[]);beats.append(current)
- elif line.startswith('?'):
-  k,q,*options=line[1:].split('|');current['ask']={'correct':int(k),'q':q,'options':[a.split('~') for a in options]}
- elif line.startswith('+'):
-  label,note=line[1:].split('|');current['clues'].append([label,note]);
- else:
-  speaker,text=line.split('|',1);current['lines'].append([speaker,text]);
-spells=[]
-for l in appendix.splitlines():
- if re.match(r'^\| \d{2} \|',l):
-  num,school,name,typ,desc=[a.strip().strip('*') for a in l.strip('|').split('|')];spells.append([int(num),school,name,typ,desc])
-chapters=[{'title':x.split('\n',1)[0].strip(),'text':x.split('\n',1)[1].strip().replace('**','').replace('*','')} for x in prose.split('### ')[1:]]
-assert len(zones)==len(chapters)==7 and len(spells)==34 and sum(s[3]=='Karanlık' for s in spells)==8 and len(set(s[1] for s in spells))==8
-assert all(b['lines'] for b in beats) and all(len(b['clues'])==3 for b in beats if b['kind']=='search')
-for b in beats:
- if 'ask' in b: assert all(len(a)==2 for a in b['ask']['options']) and -1<=b['ask']['correct']<len(b['ask']['options'])
-for name,obj in [('chapter',{'zones':zones,'beats':beats}),('archive',{'chapters':chapters,'spells':spells})]:
- f=data/(name+'.json'); out=json.dumps(obj,ensure_ascii=False,indent=1)+'\n'
- if '--check' in sys.argv:assert f.read_text()==out,f'{f} is out of date'
- else:f.write_text(out)
-print(f'{len(zones)} districts · {len(beats)} interactive beats · {sum(len(b["lines"]) for b in beats)} dialogue pages · 34 spells')
+
+from voice_assets import check_take
+
+ROOT = Path(__file__).resolve().parents[1]
+DATA = ROOT / 'game/data'
+VOICES = ROOT / 'game/audio/voices/tr'
+
+
+def voice_bank():
+    """Vorbis comments travel with the actual take. Reject a stale subtitle or miscast file."""
+    rows = json.loads((ROOT / 'story/kalkstein-voices.json').read_text())
+    assert {p.stem for p in VOICES.glob('*.ogg')} == set(rows), 'voice assets and script differ'
+    masters = ROOT / 'story/voice-masters'
+    assert {p.stem for p in masters.glob('*.flac')} == set(rows), 'voice masters and script differ'
+    for key, (speaker, words) in rows.items():
+        assert re.fullmatch(r'[a-z0-9_]+', key), key
+        check_take(VOICES / (key + '.ogg'), speaker, words)
+        check_take(masters / (key + '.flac'), speaker, words)
+    return rows
+
+
+def compile_chapter():
+    voices = voice_bank()
+    used = set()
+    zones, beats = [], []
+    for line in (ROOT / 'story/episode1.av').read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith('#'):
+            continue
+        op, val = line[0], line[1:]
+        if op == '@':
+            name, sub = val.split('|')
+            zones.append(dict(name=name, subtitle=sub))
+        elif op == ':':
+            loc, model, kind, title = val.split('|')
+            beat = dict(id=len(beats), zone=len(zones)-1, at=list(map(float, loc.split(','))),
+                        model=model, kind=kind, title=title, lines=[], clues=[])
+            beats.append(beat)
+        elif op == '?':
+            k, q, *options = val.split('|')
+            beat['ask'] = dict(correct=int(k), q=q, options=[o.split('~') for o in options])
+        elif op == '+':
+            beat['clues'].append(val.split('|'))
+        elif op == '>':  # unvoiced walk-and-talk; same subtitle channel, no borrowed voice
+            role, words = val.split('|', 1)
+            beat.setdefault('entry', []).append([role, words])
+        elif op in '!$':  # ! walk-and-talk on entry; $ voiced conversation at the set
+            beat.setdefault('entry' if op == '!' else 'lines', []).append([*voices[val], val])
+            used.add(val)
+        else:
+            beat['lines'].append(line.split('|', 1))
+    assert used == set(voices), 'unreferenced recording'
+    for b in beats:
+        assert b['lines'] or b['kind'] in {'night_fork','night_pass','night_chase','night_out','forest_cross'}
+        if b['kind'] == 'search':
+            assert len(b['clues']) == 3
+        if 'ask' in b:
+            a = b['ask']
+            assert all(len(o) == 2 for o in a['options']) and -1 <= a['correct'] < len(a['options'])
+    return dict(zones=zones, beats=beats)
+
+
+def compile_book():
+    prose, appendix = (ROOT / 'episode-1.md').read_text().split('\n---\n', 1)
+    chapters = []
+    for chunk in prose.split('### ')[1:]:
+        title, text = chunk.split('\n', 1)
+        chapters.append(dict(title=title.strip(), text=text.strip().replace('*', '')))
+    spells = []
+    for line in appendix.splitlines():
+        if re.match(r'^\| \d{2} \|', line):
+            num, school, name, kind, desc = [c.strip().strip('*') for c in line.strip('|').split('|')]
+            spells.append([int(num), school, name, kind, desc])
+    assert len(spells) == 34 and sum(s[3] == 'Karanlık' for s in spells) == len({s[1] for s in spells}) == 8
+    return dict(chapters=chapters, spells=spells)
+
+
+if __name__ == '__main__':
+    chapter, book = compile_chapter(), compile_book()
+    assert len(chapter['zones']) == len(book['chapters']) == 7
+    for name, obj in [('chapter', chapter), ('archive', book)]:
+        path = DATA / (name + '.json')
+        out = json.dumps(obj, ensure_ascii=False, indent=1) + '\n'
+        if '--check' in sys.argv:
+            assert path.read_text() == out, f'{path} is out of date'
+        else:
+            path.write_text(out)
+    print(f"{len(chapter['zones'])} districts · {len(chapter['beats'])} beats · {len(voice_bank())} matching voice takes · 34 spells")

@@ -63,7 +63,7 @@ func run():
 					for i in range(1700):
 						if not g.trail:
 							break
-						var guide = g.world.people["Tamar"].position
+						var guide = g.world.people["Aldric"].position
 						var diff = guide - g.hero.position
 						g.touch_move = (
 							Vector2(diff.x, diff.z).normalized()
@@ -73,13 +73,31 @@ func run():
 						g._physics_process(.05)
 						trail_seconds += .05
 					g.touch_move = Vector2.ZERO
-					check(not g.trail, "follow Tamar on foot")
+					check(not g.trail, "follow Aldric on foot")
 				elif g.vaulting:
 					for i in range(25):
 						g._physics_process(.05)
 				else:
 					var dest = g.terrain_target()
-					walk_to(dest, 2.45)
+					if g.zone == 0 and g.beat.kind == "night_pass" and g.world.route == "cellar" and not g.hero.crouched:
+						g.crouch()
+					if g.beat.kind in ["forest_shoe", "forest_ember"] and not g.hero.crouched:
+						g.crouch()
+					if g.beat.kind == "forest_cross":
+						if not g.hero.crouched: g.crouch()
+						var margin = g.world.bank(g.world.LOG_X,-5.5)
+						walk_to(margin,.40)
+						walk_to(g.world.bank(g.world.LOG_X, 5.6), .42)
+						g._physics_process(.05)
+						if g.hero.crouched: g.crouch()
+						check(g.flags.get("brook", "") == "log", "crossed the stream by walking the log")
+						continue
+					if g.gate_open:
+						walk_to(dest, .6)
+						g.velocity = Vector3.FORWARD
+						g._physics_process(.05)
+						continue
+					walk_to(dest, 1.15 if g.zone == 0 or g.beat.kind.begins_with("forest_") else 2.45)
 					g.nearby_note = -1
 					if g.round_no >= 0 and g.beat.kind == "paired":
 						g.hero.heading = atan2(
@@ -195,6 +213,8 @@ func run():
 		encountered.keys()
 	)
 	g.audio.music.stop()
+	g.audio.ambience.stop()
+	g.audio.quiet()
 	for stream in g.audio.pool:
 		stream.stop()
 	g.queue_free()
@@ -208,12 +228,12 @@ func run():
 # Find a walkable grid route and drive the production analogue locomotion along it.
 # The runner advances simulation ticks without sleeping; reading time is a separate model.
 func navmesh():
-	if nav_zone == g.zone:
+	if nav_zone == g.zone and g.zone != 0:
 		return
 	nav_zone = g.zone
 	grid = AStarGrid2D.new()
 	var depth = ceili(g.world.length) + 18
-	grid.region = Rect2i(-49, -depth, 100, depth + 14)
+	grid.region = Rect2i(-49, -depth, 100, depth + (84 if g.zone == 2 else 14))
 	grid.cell_size = Vector2.ONE
 	grid.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
 	grid.update()

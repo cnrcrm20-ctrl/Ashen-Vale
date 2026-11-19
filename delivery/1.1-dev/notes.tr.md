@@ -1,0 +1,14 @@
+**Bölüm I · 3. Zeytin — Android ön sürümü.** Bu, 1.0.0’ın üzerine kurulan bir güncelleme değil. `Ashen-Vale-1.1-dev-Android.apk` telefonda **Ashen Vale Önizleme** olarak görünür (`com.ashenvale.episodeone.preview`). Eski oyunu kaldırmanız gerekmez; kayıtlar ayrıdır. Android 7.0 (API 24) veya üstünde, Vulkan ve ASTC destekli 64 bit ARM ya da x86_64 cihazda APK’yı indirip açın. Android isterse yalnızca indirmeyi açtığınız uygulamaya kurulum izni verip kurduktan sonra kapatın. Uygulama mağaza hesabı veya internet izni istemez.
+
+Kalkstein Yetimhanesi’nde Lyra’yı bulun, Matilda’nın iskele kâtibine cevabını dinleyin ve mutfaktan ya da kilerden kaçın. Su Eşiği’nden sonraki orman geçişiniz ilk ocakta hatırlanır. Bölüm, Ölçü Evi’ndeki derslerden Üçdil’deki çelişkiye ve sefer hazırlığına kadar oynanır. Bölüm II bu pakette yoktur.
+
+**İkinci dosya:** `kalkstein-diyalog.mp4` (10,29 sn, 1280×720). Lyra ve Lyander’in oyunun kamera, mikser ve altyazısıyla kaydedilmiş konuşmasıdır; telefon performans ölçümü değildir. Oyunda dört Türkçe rolün on kaydı vardır; diğer satırlar şimdilik yalnız altyazılıdır. [Sahne kaynakları ve lisanslar](https://github.com/cnrcrm20-ctrl/Ashen-Vale/blob/6d58cf28399e476760372bbb4de14bcd9a44e80b/game/licenses/Credits.txt): karakterler Quaternius (CC0), eşya ve mimari Vanai (MIT), PBR yüzeyler ambientCG/Poly Haven (CC0); yağmur Wildfire Games / 0 A.D., Rain_11 kaydından uyarlanmış mono kesit ([CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)).
+
+**Doğrulama:** [Kaynak ve Android derlemesi](https://github.com/cnrcrm20-ctrl/Ashen-Vale/actions/runs/44445933317). İmza ve 16 KiB ZIP hizası denetlendi. Aynı x86_64 Android emülatörüne önce özgün 1.0.0, sonra bu APK kuruldu. Vulkan Mobile yolunda iki uygulamanın ayrı kimlikleriyle yan yana durduğu ve önizlemede açılış, dokunma, görünür diyalog, kapanıştan sonra kayıt dönüşü doğrulandı. 64 bit ARM pakette yer alır; fiziksel Helio G96/Mali-G57, Bluetooth/USB kol, sürdürülebilir FPS ve bir saatlik gerçek oyuncu süresi doğrulanmadı.
+
+| Dosya | SHA-256 |
+|---|---|
+| Android APK | `87963ad092d0de092a9304519bfee4116e5f93baf443a481b9d44c820efc18f7` |
+| MP4 | `43cf3858850f5af8d883ffe57aed2cba261a79c8a3260cb6e88a45368ed04fdf` |
+
+Önizleme imza sertifikası (SHA-256): `e9e1bf08291e67e014597137dd01fec7abf2cebc183c7792eb151408d910be29`. [1.0.0 kararlı sürümü](https://github.com/cnrcrm20-ctrl/Ashen-Vale/releases/tag/bolum-1-v1.0.0) değiştirilmedi.
