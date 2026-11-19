@@ -7,7 +7,7 @@ for f in glob.glob('build/*.log')+glob.glob('build/device/*.log'):
  if pathlib.Path(f).name=='licenses.log':continue
  lines=pathlib.Path(f).read_text(errors='replace').splitlines();errors=[]
  for i,l in enumerate(lines):
-  if any(x in l for x in ['ERROR:', 'Parse Error:', 'TEST:','SHADER ERROR:','CHAPTER_SMOKE','VISUAL_SMOKE','ANDROID_SMOKE','PACE_MODEL','AV_READY','Missing Android state','AV_BEAT 0','ANDROID_SMOKE']):
+  if any(x in l for x in ['ERROR:', 'Parse Error:', 'TEST:','SHADER ERROR:','CHAPTER_SMOKE','VISUAL_SMOKE','ANDROID_SMOKE','PACE_MODEL','AV_READY','Missing Android state','AV_BEAT 0','ANDROID_PARALLEL_INSTALL','ANDROID_FRAMES','ANDROID_MOBILE_RENDERER','Vulkan 1.','OpenGL API','SWIPE']):
    msg=' '.join(lines[i:i+2])[:1000];
    if msg not in seen:errors.append(msg);seen.add(msg)
  print('::notice title='+pathlib.Path(f).name+'::'+(' | '.join(errors[:12]) if errors else ' '.join(lines[-4:]))[:6000].replace('%','%25').replace('\r','%0D'))

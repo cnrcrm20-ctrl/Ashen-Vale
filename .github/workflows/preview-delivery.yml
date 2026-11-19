@@ -93,7 +93,13 @@ jobs:
           export ASHEN_STABLE_REFERENCE="$RUNNER_TEMP/stable.apk"
           curl -fLsS --retry 3 "https://github.com/$GITHUB_REPOSITORY/releases/download/bolum-1-v1.0.0/Ashen-Vale-Episode-1.apk" -o "$ASHEN_STABLE_REFERENCE"
           echo "$(jq -r .sha256 delivery/episode1.json)  $ASHEN_STABLE_REFERENCE" | sha256sum -c -
-          LIBGL_ALWAYS_SOFTWARE=1 EMULATOR_GPU=host timeout -k 10 12m xvfb-run -a bash tools/device-smoke.sh "$APK"
+          lvp=$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)
+          if [[ -z "$lvp" ]]; then
+            sudo apt-get update -qq && sudo apt-get install -y mesa-vulkan-drivers
+            lvp=$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)
+          fi
+          test -f "$lvp"; export VK_ICD_FILENAMES="$lvp" VK_DRIVER_FILES="$lvp"
+          EMULATOR_VULKAN=on LIBGL_ALWAYS_SOFTWARE=1 EMULATOR_GPU=host timeout -k 10 12m xvfb-run -a bash tools/device-smoke.sh "$APK"
       - name: Save diagnostic frames and install evidence
         if: always()
         id: report

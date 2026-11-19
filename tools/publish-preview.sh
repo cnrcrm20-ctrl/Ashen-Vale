@@ -7,6 +7,7 @@ TAG=bolum-1-v1.1-dev
 SOURCE=$(jq -er .source_commit "$M")
 A=$(basename "$APK"); V=$(basename "$MP4")
 repo=(--repo "$GITHUB_REPOSITORY")
+grep -q '^ANDROID_MOBILE_RENDERER PASS' build/device/test.log
 grep -q '^ANDROID_PARALLEL_INSTALL PASS' build/device/test.log
 grep -q '^ANDROID_SMOKE PASS' build/device/test.log
 grep -qx 'ANDROID_FRAMES PASS' build/device/frames.log

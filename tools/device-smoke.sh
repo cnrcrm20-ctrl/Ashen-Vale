@@ -27,6 +27,11 @@ adb start-server
 "$E" -version | head -8 || true
 "$E" -accel-check || true
 ls -l /dev/kvm || true
+# Historical 1.0.0 is GLES. For the Vulkan preview exercise the actual
+# Mobile renderer on a Vulkan-enabled AVD instead of advertising hardware
+# that was deliberately disabled by the old emulator command line.
+vk_feature=-Vulkan
+if [[ ${EMULATOR_VULKAN:-off} == on ]]; then vk_feature=Vulkan; fi
 "$E" @"$AVD" -port 5554 -memory 2048 -cores 2 -no-window -no-snapshot -no-audio -no-boot-anim -gpu "${EMULATOR_GPU:-host}" -feature -Vulkan -camera-back none -camera-front none >"$AVDLOG" 2>&1 & EMUPID=$!
 finish(){ timeout 5 adb logcat -d -s 'godot:I' 'Godot:I' 'AndroidRuntime:E' >"$D/game.log" 2>&1 || :; tail -50 "$D/game.log" || :; tail -35 "$AVDLOG" || :; timeout 4 adb emu kill >/dev/null 2>&1 || :; kill "$EMUPID" 2>/dev/null || :; }; trap finish EXIT
 boot=no
@@ -37,6 +42,10 @@ for n in {1..95}; do
 done
 [[ $boot == yes ]] || { echo '::error::Android boot timeout';tail -80 "$AVDLOG";exit 1; }
 echo '::notice::AOSP API 31 booted'
+if [[ $vk_feature == Vulkan ]]; then
+  adb shell pm list features | grep -F 'android.hardware.vulkan'
+  timeout 15 adb shell cmd gpu vkjson >"$D/vulkan.json" 2>&1 || :
+fi
 adb shell settings put secure immersive_mode_confirmations confirmed; adb shell wm dismiss-keyguard; adb shell wm size 720x1280; adb shell wm density 240; adb shell input keyevent 82; adb shell settings put system accelerometer_rotation 0
 # Keep historical 1.0.0 testable but never install an unrelated application.
 PK=$("$BT/aapt" dump badging "$APK" | sed -n "s/^package: name='\([^']*\)'.*/\1/p")
@@ -79,4 +88,8 @@ adb logcat -d -s "godot:I" "Godot:I" >"$D/first-launch.log";adb shell input keye
 adb logcat -d -s 'godot:I' 'Godot:I' >"$D/resume.log"
 python3 tools/check-android-frames.py "$ROOT/build/shots" | tee "$D/frames.log"
 if grep -E 'Program linking failed|SHADER ERROR|SCRIPT ERROR:|FATAL EXCEPTION|Failed loading resource: res://|No loader found for resource: res://' "$D/first-launch.log" "$D/resume.log";then echo '::error::Android shader, script or packaged resource failure';exit 1;fi
+if [[ $vk_feature == Vulkan ]]; then
+  grep -Ei 'Vulkan [0-9].*Mobile' "$D/first-launch.log"
+  echo 'ANDROID_MOBILE_RENDERER PASS'
+fi
 echo 'ANDROID_SMOKE PASS · signed install / title / settings / walk / touch dialogue / movement / process death / resume'
