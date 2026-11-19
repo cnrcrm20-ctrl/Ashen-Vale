@@ -10,7 +10,14 @@ func _initialize(): call_deferred("run")
 
 func photo(id: String):
 	await process_frame
-	await RenderingServer.frame_post_draw
+	if RenderingServer.render_loop_enabled:
+		await RenderingServer.frame_post_draw
+	else:
+		# The CPU-only CI runner need not draw the staging/cleanup ticks. Warm
+		# the real viewport, then draw/read the actual posed frame at full size.
+		RenderingServer.force_draw(true, 1. / 24.)
+		await process_frame
+		RenderingServer.force_draw(true, 1. / 24.)
 	var img = root.get_texture().get_image()
 	if img == null or img.is_empty():
 		push_error("No rendered viewport for " + id); failed = true; return

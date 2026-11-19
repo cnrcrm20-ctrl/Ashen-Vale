@@ -15,3 +15,6 @@ __pycache__/
 # Import sidecars are generated from game/project.godot on the build runner.
 # Scenes and scripts reference source paths; do not ship local cache formats.
 /game/**/*.import
+
+# Installed by the pinned Godot Gradle template, never authored game content.
+/game/android/
