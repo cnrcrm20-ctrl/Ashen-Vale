@@ -38,7 +38,10 @@ done
 [[ $boot == yes ]] || { echo '::error::Android boot timeout';tail -80 "$AVDLOG";exit 1; }
 echo '::notice::AOSP API 31 booted'
 adb shell settings put secure immersive_mode_confirmations confirmed; adb shell wm dismiss-keyguard; adb shell wm size 720x1280; adb shell wm density 240; adb shell input keyevent 82; adb shell settings put system accelerometer_rotation 0
-timeout 80 adb install "$APK"; PK=com.ashenvale.episodeone; ACT=$(adb shell cmd package resolve-activity --brief "$PK" | tail -1 | tr -d '\r'); [[ $ACT == $PK/* ]]
+# Keep historical 1.0.0 testable but never install an unrelated application.
+PK=$("$BT/aapt" dump badging "$APK" | sed -n "s/^package: name='\([^']*\)'.*/\1/p")
+case "$PK" in com.ashenvale.episodeone|com.ashenvale.episodeone.preview) ;; *) echo 'Unexpected application ID'; exit 1;; esac
+timeout 80 adb install "$APK"; ACT=$(adb shell cmd package resolve-activity --brief "$PK" | tail -1 | tr -d '\r'); [[ $ACT == $PK/* ]]
 wait_mark(){ local m=$1; echo "Waiting for $m"; for n in {1..55}; do if timeout 5 adb logcat -d -s 'godot:I' 'Godot:I' | grep -F "$m" >/dev/null; then return 0; fi; sleep 1; done; echo "Missing Android state $m";return 1; }
 shot(){ adb exec-out screencap -p >"$ROOT/build/shots/android-$1.png"; }
 launch(){ adb logcat -c;timeout 35 adb shell am start -W -n "$ACT"; wait_mark 'AV_READY title';sleep 1; }
@@ -46,6 +49,16 @@ launch;shot title
 read -r W H < <(python3 -c 'import struct;print(*struct.unpack(">II",open("build/shots/android-title.png","rb").read()[16:24]))'); [[ $W -gt $H ]]
 tap(){ adb shell input tap "$((W*$1/100))" "$((H*$2/100))"; }
 tap 14 70;wait_mark 'AV_MENU settings';adb shell input keyevent 4; sleep 1; tap 17 61;wait_mark 'AV_BEAT 0';wait_mark 'AV_WALK';sleep 1;shot court
+# The released 1.0.0 begins beside the bowl. The new cut begins on foot.
+# Inspect the installed package, so the signed historical screencheck remains reproducible.
+VER=$(adb shell dumpsys package "$PK" | sed -n 's/.*versionName=//p' | head -1 | tr -d '\r')
+if [[ "$VER" != 1.0.0 ]]; then
+  for n in {1..9}; do
+    if adb logcat -d -s 'godot:I' 'Godot:I' | grep -F 'AV_NEAR Lyra' >/dev/null; then break; fi
+    adb shell input swipe "$((W*12/100))" "$((H*80/100))" "$((W*9/100))" "$((H*60/100))" 630
+  done
+  wait_mark 'AV_NEAR Lyra'
+fi
 tap 90 89;wait_mark 'AV_LINE 0:0';sleep 1;shot dialogue
 for n in 1 2 3; do tap 86 93;sleep .5;done; wait_mark 'AV_BEAT 1'
 # A real touch drag, not a debug teleport. Android save/resume is exercised by process death.

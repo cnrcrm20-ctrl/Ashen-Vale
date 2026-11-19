@@ -11,3 +11,7 @@ __pycache__/
 
 # Private owner-only Android signing material. Never upload or commit.
 /.signing-private/
+
+# Import sidecars are generated from game/project.godot on the build runner.
+# Scenes and scripts reference source paths; do not ship local cache formats.
+/game/**/*.import

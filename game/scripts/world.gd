@@ -3,7 +3,8 @@ extends Node3D
 const Actor = preload("res://scripts/actor.gd")
 const WATER = preload("res://shaders/river.gdshader")
 const LINEN = preload("res://shaders/linen.gdshader")
-const PEOPLE = ["Mina", "Hedi", "Tamar", "Oris", "Ruva", "Ekin", "Ese", "Sarpel"]
+const Surfaces = preload("res://scripts/surfaces.gd")
+const PEOPLE = ["Lyra", "Matilda", "Aldric", "Dorian", "Magnus", "Ariadne", "Edda", "Valer"]
 var zone = 0
 var length = 250.0
 var rng = RandomNumberGenerator.new()
@@ -14,6 +15,7 @@ var obstacles: Array = []
 var people = {}
 var sites = {}
 var actors: Array = []
+var directed: Array = []
 var env: Environment
 var sun: DirectionalLight3D
 var way: Node3D
@@ -33,7 +35,7 @@ func center(d: float) -> float:
 	return sin(d * .022 + zone * .77) * 10 + sin(d * .05 + zone) * 2.6
 
 
-func altitude(x: float, z: float) -> float:
+func natural_height(x: float, z: float) -> float:
 	var d = -z
 	var edge = absf(x - center(d))
 	var h = sin(d * .026 + zone) * 1.75 + sin(x * .055 + d * .018) * .7
@@ -42,6 +44,21 @@ func altitude(x: float, z: float) -> float:
 	if zone == 6:
 		h -= 1.05 * sin(d * .019)
 	return h + maxf(edge - 31, 0) * (.105 + .065 * sin(d * .05))
+
+
+func altitude(x: float, z: float) -> float:
+	var h = natural_height(x,z)
+	if zone == 4:
+		for meal in [[139.,-7.],[178.,6.]]:
+			var origin = Vector2(center(meal[0])+meal[1],-meal[0])
+			var span = Vector2(x,z)-origin
+			var edge = maxf(absf(span.x)-6.,absf(span.y)-5.)
+			if edge < 4.: return lerpf(natural_height(origin.x,origin.y),h,smoothstep(0.,4.,edge))
+	return h
+
+
+func walk_height(x: float, z: float) -> float:
+	return altitude(x, z)
 
 
 func loc(d: float, lane: float) -> Vector3:
@@ -109,8 +126,6 @@ func geometry(key: String) -> Mesh:
 			m = BoxMesh.new()
 		"roof":
 			m = prism_roof()
-		"arch":
-			m = arch_mesh()
 		"pot":
 			m = lathe(
 				[
@@ -215,30 +230,10 @@ func prism_roof() -> ArrayMesh:
 	return st.commit()
 
 
-func arch_mesh() -> ArrayMesh:
-	var st = SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for k in range(12):
-		var a = PI * k / 12 + .006
-		var b = PI * (k + 1) / 12 - .006
-		var pts = []
-		for z in [-.36, .36]:
-			for pair in [[a, 1.], [b, 1.], [b, 1.36], [a, 1.36]]:
-				pts.append(Vector3(cos(pair[0]) * pair[1], sin(pair[0]) * pair[1], z))
-		for face in [
-			[0, 1, 2, 3], [7, 6, 5, 4], [4, 5, 1, 0], [3, 2, 6, 7], [0, 3, 7, 4], [1, 5, 6, 2]
-		]:
-			var normal = (
-				(pts[face[1]] - pts[face[0]]).cross(pts[face[2]] - pts[face[0]]).normalized()
-			)
-			for j in [0, 1, 2, 0, 2, 3]:
-				st.set_normal(normal)
-				st.add_vertex(pts[face[j]])
-	return st.commit()
-
-
 func put(shape: String, col: String, pos: Vector3, sz: Vector3, rot = Vector3.ZERO):
 	var key = shape + ":" + col
+	if shape in ["set_pine", "set_oak", "set_fern"]:
+		key += ":%d,%d" % [floori(pos.x/32.),floori(pos.z/32.)]
 	if not batches.has(key):
 		batches[key] = []
 	batches[key].append(Transform3D(Basis.from_euler(rot) * Basis.from_scale(sz), pos))
@@ -254,94 +249,91 @@ func beam(a: Vector3, b: Vector3, r: float, col: String):
 	put("rod", col, (a + b) / 2, Vector3(r, d.length(), r), Basis(q).get_euler())
 
 
-func arch(p: Vector3, r: float, h: float, turn = false, col = "#d6c094"):
-	var d = Vector3.BACK if turn else Vector3.RIGHT
-	for signum in [-1, 1]:
-		var foot = p + d * r * 1.17 * signum
-		block(foot, Vector3(.58 * r, h, .8 * r) if not turn else Vector3(.8 * r, h, .58 * r), col)
-		block(foot + Vector3.UP * (h - .2), Vector3(.85 * r, .28, 1.0 * r), "#ae9773")
-	put("arch", col, p + Vector3.UP * h, Vector3.ONE * r, Vector3(0, PI / 2 if turn else 0., 0))
+func tree(p: Vector3, h: float, pine = false):
+	scenery("pine" if pine else "oak", p, h, rng.randf_range(-PI, PI))
 
 
-func tree(p: Vector3, h: float, cypress = false):
-	var bark = "#695843"
-	var tint = ["#6a804e", "#73865b", "#526f4b"][rng.randi_range(0, 2)]
-	if cypress:
-		beam(p, p + Vector3.UP * h * .75, h * .09, bark)
-		for i in range(3):
-			put(
-				"cone",
-				tint,
-				p + Vector3.UP * h * (.4 + i * .16),
-				Vector3(h * (.28 - .045 * i), h * (.68 - .08 * i), h * (.27 - .043 * i)),
-				Vector3(0, i * .65, .025)
-			)
-	else:
-		beam(p, p + Vector3(.3, h * .52, .1), h * .14, bark)
-		for k in range(5):
-			var a = k * 1.26 + rng.randf_range(-.3, .3)
-			var leaf = (
-				p + Vector3(cos(a) * h * .34, h * (.65 + .21 * rng.randf()), sin(a) * h * .34)
-			)
-			beam(p + Vector3(.2, h * .36, .1), leaf, h * .065, bark)
-			put("leaf", tint, leaf, Vector3(h * .8, h * .41, h * .72), Vector3(.11, a, .12))
+func occluder(at: Vector3, size_: Vector3):
+	if DisplayServer.get_name() == "headless" or not get_viewport().use_occlusion_culling: return
+	var o = OccluderInstance3D.new()
+	var bounds = BoxOccluder3D.new(); bounds.size = size_
+	o.occluder = bounds; o.position = at; add_child(o)
 
 
-func house(p: Vector3, w: float, d: float, h: float, col: String, solid = true):
-	var pool = ["cottage", "hearth", "inn", "kiln"] if zone < 3 else ["lodge", "tower", "hearth"]
-	var model = pool[rng.randi_range(0, pool.size() - 1)]
+func house(p: Vector3, _w: float, _d: float, h: float, _col: String, solid = true):
 	var turn = PI * .5 if p.x < center(-p.z) else -PI * .5
-	var bounds = scenery(model, p, h * 1.37, turn + rng.randf_range(-.16, .16))
+	var bounds = scenery("lodge_shell" if rng.randf() < .5 else "inn_shell", p, h * 1.35, turn)
 	if solid:
 		obstacles.append(Vector4(p.x, p.z, bounds.z * .5, bounds.x * .5))
+		occluder(p + Vector3.UP * h*.36, Vector3(bounds.z*.67,h*.72,bounds.x*.65))
 
 
-func scenery(kind: String, p: Vector3, height: float, turn = 0.) -> Vector3:
-	var key = "atlas_" + kind
+func set_mesh(id: String) -> Mesh:
+	var key = "set_" + id
 	if not shapes.has(key):
-		var src = load("res://art/district/" + kind + ".gltf").instantiate()
-		var bits = src.find_children("*", "MeshInstance3D", true, false)
-		if src is MeshInstance3D:
-			bits.push_front(src)
-		assert(not bits.is_empty(), kind)
-		shapes[key] = bits[0].mesh
+		var src = load("res://art/set/" + id + ".gltf").instantiate()
+		var m = src if src is MeshInstance3D else src.find_children("*", "MeshInstance3D", true, false)[0]
+		shapes[key] = m.mesh
+		if id in ["lodge_shell","inn_shell","cap_tower","bay_cl_arch","bay_hl_win","lane_wall","market_stall_a"]:
+			var architecture: Mesh = m.mesh.duplicate()
+			for i in range(architecture.get_surface_count()):
+				var mat = architecture.surface_get_material(i)
+				if not mat is StandardMaterial3D: continue
+				match str(mat.resource_name):
+					"MC_Stone": architecture.surface_set_material(i,Surfaces.get_material("lime",1.72))
+					"MC_Timber": architecture.surface_set_material(i,Surfaces.get_material("boards",1.38))
+					"MC_Glass":
+						var pane = mat.duplicate(); pane.albedo_color = Color("556265"); pane.roughness = .63
+						architecture.surface_set_material(i,pane)
+					_:
+						var tile = mat.duplicate(); tile.albedo_color *= Color("9b8271"); tile.roughness = .86
+						architecture.surface_set_material(i,tile)
+			shapes[key] = architecture
+		if id in ["oak", "pine"]:
+			var mesh: Mesh = m.mesh.duplicate()
+			var foliage = ShaderMaterial.new()
+			foliage.shader = preload("res://shaders/canopy.gdshader")
+			foliage.set_shader_parameter("foliage", load("res://art/set/%s_leaf.png" % id))
+			mesh.surface_set_material(1, foliage)
+			mesh.surface_set_material(0, Surfaces.get_material("bark", 1.7))
+			shapes[key] = mesh
 		src.free()
-	var bb = shapes[key].get_aabb()
-	var factor = height / maxf(.001, bb.size.y)
-	put(
-		key,
-		"atlas",
-		p - Vector3.UP * bb.position.y * factor,
-		Vector3.ONE * factor,
-		Vector3(0, turn, 0)
-	)
+	return shapes[key]
+
+
+func scenery(id: String, p: Vector3, height: float, turn = 0.) -> Vector3:
+	var bb = set_mesh(id).get_aabb()
+	if id == "cap_tower":
+		# This module is only the tiled cap, not an entire tower.
+		var span = height * .29; var cap_scale = (span + .88) / bb.size.x
+		var eaves = height - bb.size.y * cap_scale; var sill = eaves-1.66
+		block(p-Vector3.UP*.35,Vector3(span,sill+.35,span),"wet_stone")
+		block(p+Vector3.UP*sill,Vector3(span+.23,.16,span+.23),"plaster")
+		for x in [-1.,1.]:
+			for z in [-1.,1.]: block(p+Vector3(x*(span*.5-.14),sill,z*(span*.5-.14)),Vector3(.27,1.66,.27),"sawn")
+		for z in [-1.,1.]:
+			block(p+Vector3(0,sill+.65,z*(span*.5-.14)),Vector3(span,.12,.15),"sawn")
+			block(p+Vector3(0,eaves-.18,z*(span*.5-.14)),Vector3(span,.18,.21),"sawn")
+		furnish(id,p+Vector3.UP*eaves,cap_scale,turn)
+		return Vector3(span,height,span)
+	var shell = id in ["lodge_shell","inn_shell"]
+	# Shell y=0 is the doorstep. Below it the artist modelled footing posts;
+	# lifting their lowest tips to the ground leaves entire inns on stilts.
+	var factor = height / maxf(.001, bb.end.y if shell else bb.size.y)
+	var base = p - Vector3.UP * (.12 if shell else bb.position.y*factor)
+	furnish(id, base, factor, turn)
 	return bb.size * factor
 
 
+func furnish(id: String, p: Vector3, factor = 1., turn = 0.):
+	set_mesh(id)
+	put("set_" + id, "atlas", p, Vector3.ONE * factor, Vector3(0, turn, 0))
+
+
 func shop(p: Vector3, sgn: float):
-	var tint = ["#356d70", "#a05546", "#b08a44"][rng.randi_range(0, 2)]
-	for x in [-2.4, 2.4]:
-		for z in [-1.9, 1.9]:
-			beam(p + Vector3(x, 0, z), p + Vector3(x, 3.5 + x * .08 * sgn, z), .16, "#78583d")
-	put("sheet", tint, p + Vector3.UP * 3.45, Vector3(5.6, 1, 4.7), Vector3(0, 0, .085 * sgn))
-	block(p, Vector3(3.9, .83, 1.3), "#9a714e")
-	for j in range(4):
-		put(
-			"pot",
-			["#b57552", "#cda977"][j % 2],
-			p + Vector3(j * .8 - 1.25, .85, 0),
-			Vector3.ONE * (.57 + j * .035)
-		)
-
-
-func props(kind: String, pos: Vector3, sz = 1., yaw = 0.):
-	var l = load("res://art/props/" + kind + ".glb")
-	if l:
-		var inst = l.instantiate()
-		inst.scale = Vector3.ONE * sz
-		inst.rotation.y = yaw
-		inst.position = pos
-		add_child(inst)
+	furnish("market_stall_a", p, 1.07, PI*.5 if sgn > 0. else -PI*.5)
+	furnish("jar_storage",p + Vector3(1.72,0,-.22),.85,.25)
+	furnish("sack_tied",p + Vector3(1.64,0,.65),.88,-.43)
 
 
 func flush():
@@ -356,8 +348,18 @@ func flush():
 			mm.set_instance_transform(i, batches[k][i])
 		var view = MultiMeshInstance3D.new()
 		view.multimesh = mm
+		if parts[0] == "set_fern":
+			view.visibility_range_end = 72. if high else 42.
+			view.visibility_range_end_margin = 5.
+			view.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		if parts[1] == "atlas":
 			pass  # the mesh already owns its shared, textured material
+		elif parts[1] == "plaster":
+			view.material_override = Surfaces.get_material("lime",1.52)
+		elif parts[1] == "sawn":
+			view.material_override = Surfaces.get_material("boards",1.22)
+		elif parts[1] == "wet_stone":
+			view.material_override = Surfaces.get_material("stone", 1.35)
 		elif parts[0] == "sheet":
 			var cloth = ShaderMaterial.new()
 			cloth.shader = LINEN
@@ -372,43 +374,69 @@ func flush():
 func terrain():
 	var st = SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var base = Color(vistas[zone])
-	var sand = Color("b49c78")
-	for z in range(-int(length) - 95, 76, 5):
-		for x in range(-140, 140, 5):
-			for o in [
-				Vector2(0, 0),
-				Vector2(5, 0),
-				Vector2(5, 5),
-				Vector2(0, 0),
-				Vector2(5, 5),
-				Vector2(0, 5)
-			]:
-				var xx = x + o.x
-				var zz = z + o.y
-				var d = absf(xx - center(-zz))
-				var blend = 1.0 - smoothstep(3.5, 10.5, d)
-				var n = sin(xx * 2.13 + zz * 1.7) * .035 + sin(xx * .074 + zz * .093) * .045
-				var color = base.lerp(sand, blend * .93).lightened(maxf(0, n)).darkened(maxf(0, -n))
-				st.set_color(color)
-				st.set_normal(
-					(
-						Vector3(
-							altitude(xx - .3, zz) - altitude(xx + .3, zz),
-							.6,
-							altitude(xx, zz - .3) - altitude(xx, zz + .3)
-						)
-						. normalized()
-					)
-				)
-				st.add_vertex(Vector3(xx, altitude(xx, zz), zz))
+	# A continuous rectangular grid: the brook's 2 m banks cannot be sampled
+	# by the 5 m district grid. Refine both axes here, without seam T-junctions.
+	var xs = []; var zs = []
+	for x in range(-140,141):
+		if x % 5 == 0 or (zone == 2 and abs(x) <= 42 and x % 2 == 0): xs.append(x)
+	for z in range(-int(length)-98,106 if zone == 2 else 76):
+		if z % 5 == 0 or (zone == 2 and z >= 24 and z <= 44): zs.append(z)
+	for row in range(zs.size()-1):
+		for col in range(xs.size()-1):
+			for ij in [[0,0],[1,0],[1,1],[0,0],[1,1],[0,1]]:
+				var x = xs[col+ij[0]]; var z = zs[row+ij[1]]
+				st.set_normal(Vector3(altitude(x-.3,z)-altitude(x+.3,z),.6,altitude(x,z-.3)-altitude(x,z+.3)).normalized())
+				st.set_uv(Vector2(x,z)*.45)
+				st.add_vertex(Vector3(x,altitude(x,z),z))
+	st.index()
+	st.generate_tangents()
 	var m = ShaderMaterial.new()
 	m.shader = preload("res://shaders/earth.gdshader")
 	m.set_shader_parameter("district", float(zone))
+	var names = {"loam": "loam_color", "flags": "cobble_color", "soil_normal": "loam_normal", "flags_normal": "cobble_normal", "soil_orm": "loam_orm", "flags_orm": "cobble_orm"}
+	for param in names:
+		m.set_shader_parameter(param, load("res://art/pbr/%s.jpg" % names[param]))
 	var ground = MeshInstance3D.new()
 	ground.mesh = st.commit()
 	ground.material_override = m
 	add_child(ground)
+
+
+# Distant geography from the lookout. The horizon is not falsely marked as a
+# navigable district; the nar trees, not this wall, bound the shared settlement.
+func highlands():
+	var st = SurfaceTool.new(); st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var origin = Vector3(0,0,-length*.44)
+	var rings: Array = []
+	var sectors = 216
+	var radii = [133.,174.,224.,263.,294.,354.,403.,451.,487.,531.,610.]
+	var peaks = [-9.,12.,59.,35.,28.,61.,112.,77.,55.,110.,86.]
+	for k in range(radii.size()):
+		var row = []
+		for j in range(sectors):
+			var a = TAU*j/sectors
+			var r = radii[k] + 14.*sin(a*7. + k*.39)
+			var fold = .47+.24*sin(a*5.+k*.45)+.17*cos(a*11.-k*.57)+.09*sin(a*23.)
+			var height = peaks[k] * (fold + .065*sin(a*33.-k*.47)+.022*cos(a*58.+k*.17))
+			row.append(origin + Vector3(sin(a)*r*1.14,height,cos(a)*(r+length*.48+45.)))
+		rings.append(row)
+	for k in range(rings.size()-1):
+		for j in range(sectors):
+			var n = (j+1)%sectors
+			for pair in [[k,j],[k+1,j],[k+1,n],[k,j],[k+1,n],[k,n]]:
+				st.add_vertex(rings[pair[0]][pair[1]])
+	var rock = ShaderMaterial.new(); rock.shader = preload("res://shaders/highlands.gdshader")
+	rock.set_shader_parameter("slope_detail", preload("res://art/pbr/stone_color.jpg"))
+	rock.set_shader_parameter("distance_tint",Color("c6b8ad") if zone == 4 else Color("adbab7"))
+	st.generate_normals(); st.index(); var mesh = MeshInstance3D.new(); mesh.mesh = st.commit()
+	mesh.material_override = rock; mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF; add_child(mesh)
+	st = SurfaceTool.new(); st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for j in range(81,160):
+		var a: Vector3 = rings[10][j]; var b: Vector3 = rings[10][j+1]
+		var top_a = a + Vector3.UP*16.; var top_b = b + Vector3.UP*16.
+		for v in [a,top_b,b,a,top_a,top_b]: st.add_vertex(v)
+	st.generate_normals(); mesh = MeshInstance3D.new(); mesh.mesh = st.commit()
+	mesh.material_override = material("#667774"); mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF; add_child(mesh)
 
 
 func setup(index: int, beats: Array, quality: bool):
@@ -425,17 +453,14 @@ func setup(index: int, beats: Array, quality: bool):
 	sm.ground_horizon_color = sm.sky_horizon_color
 	sm.ground_bottom_color = Color("82918a")
 	sm.sun_angle_max = 9
-	var panorama = PanoramaSkyMaterial.new()
-	panorama.panorama = preload("res://art/valley_sky.jpg")
-	panorama.energy_multiplier = 0.84 if zone == 4 else 1.0
-	sky.sky_material = panorama
+	sky.sky_material = sm
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color("c6d7e0")
 	env.ambient_light_energy = .40
 	env.ambient_light_sky_contribution = 0.0
-	env.reflected_light_source = Environment.REFLECTION_SOURCE_DISABLED
-	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
+	env.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
+	env.tonemap_mode = Environment.TONE_MAPPER_ACES
 	env.tonemap_exposure = .95
 	env.fog_enabled = true
 	env.fog_light_color = sm.sky_horizon_color
@@ -445,7 +470,7 @@ func setup(index: int, beats: Array, quality: bool):
 	we.environment = env
 	add_child(we)
 	sun = DirectionalLight3D.new()
-	sun.light_color = Color("ffdfb3") if zone != 4 else Color("ffba87")
+	sun.light_color = Color("ffe3c7") if zone != 4 else Color("ffbf9a")
 	sun.light_energy = .48
 	sun.light_specular = .32
 	sun.rotation_degrees = Vector3(-41 if zone != 4 else -19, -39, 0)
@@ -455,22 +480,20 @@ func setup(index: int, beats: Array, quality: bool):
 	add_child(sun)
 	water_mat = ShaderMaterial.new()
 	water_mat.shader = WATER
+	water_mat.set_shader_parameter("capillary",preload("res://art/pbr/brook_ripples.png"))
+	if RenderingServer.get_current_rendering_method() == "forward_plus" and high:
+		env.ssao_enabled = true
+		env.glow_enabled = true
+		env.volumetric_fog_enabled = zone == 2
+		env.volumetric_fog_density = .008
 	terrain()
+	if zone >= 2: highlands()
 	district_art()
-	# An actual encircling skyline, with multiple ranges at different scales/depths.
-	for i in range(46):
-		var a = TAU * i / 46.
-		var rad = rng.randf_range(350, 476)
-		var pp = Vector3(cos(a) * rad, 0, -length * .5 + sin(a) * rad)
-		var hh = rng.randf_range(22, 50)
-		if i % 3 != 1:
-			scenery("ridge" if i % 2 else "crag", pp - Vector3.UP * 8, hh * 1.43, a)
-
 	for t in range(-10, int(length) + 15, 11):
 		for signum in [-1, 1]:
 			var lane = signum * rng.randf_range(15.3, 25)
 			var p = loc(t, lane)
-			if (zone in [0, 1, 2, 3, 4]) and rng.randf() < .5:
+			if (zone in [1, 2, 3, 4]) and (zone != 2 or t > 32) and rng.randf() < .5:
 				house(
 					p,
 					rng.randf_range(5, 8),
@@ -480,48 +503,46 @@ func setup(index: int, beats: Array, quality: bool):
 				)
 			else:
 				tree(p, rng.randf_range(4, 7), rng.randf() < .4)
-			if zone in [1, 2] and (t + 10) % 22 == 0:
+			if (zone == 1 or (zone == 2 and t >= 36)) and (t + 10) % 22 == 0:
 				shop(loc(t + 4, signum * 15.6), signum)
 			for i in range(3):
 				var f = loc(t + rng.randf_range(-5, 5), signum * rng.randf_range(36, 105))
 				scenery(
-					"elm" if i % 2 else "fir", f, rng.randf_range(4, 9), rng.randf_range(0, TAU)
+					"oak" if i % 2 else "pine", f, rng.randf_range(4, 9), rng.randf_range(0, TAU)
 				)
-			for i in range(10):
-				var g = loc(t + rng.randf_range(-5, 6), signum * rng.randf_range(9, 54))
-				put(
-					"leaf",
-					["#918e5a", "#9b9c69", "#aaa16c"][i % 3],
-					g + Vector3.UP * .09,
-					Vector3(.53, .37, .46) * rng.randf_range(.6, 2.)
-				)
+			for i in range(7):
+				var g = loc(t + rng.randf_range(-5, 6), signum * rng.randf_range(8, 40))
+				furnish("fern", g, rng.randf_range(.6, 1.45), rng.randf_range(0, TAU))
 		if t % 2 == 0:
 			var rock = loc(t, rng.randf_range(-5, 5))
-			put("rock", "#bfac8b", rock, Vector3(1.1, .08, .75), Vector3(0, t, 0))
-	for t in range(-25, int(length) + 38, 12):
-		var ap = loc(t, zone * 1.5 + 44)
-		arch(ap, 4.6, 5.4, true, "#c4b89e")
-		block(ap + Vector3.UP * 11.2, Vector3(3.7, .9, 12.5), "#c3b399")
-		if zone in [3, 4, 5]:
-			for signum in [-1, 1]:
-				var cp = loc(t, signum * 12.3)
-				put("shaft", "#ddcba4", cp, Vector3(1.65, 4.4, 1.65))
-				block(cp + Vector3.UP * 4.4, Vector3(1.7, .42, 8.), "#c7ae84")
-		if zone == 6:
-			arch(loc(t, 16.3), 2.7, 2.7, true, "#aa9e8d")
+			put("rock", "wet_stone", rock, Vector3(.49, .07, .35), Vector3(0, t, 0))
+	# The school has a human-scale cloister, not a row of ceremonial arches across the road.
+	if zone in [3,4,5]:
+		for courtyard in [22.,87.,148.]:
+			for bay in range(6):
+				var p = loc(courtyard+bay*2.82,12.)
+				furnish("bay_cl_arch" if bay % 3 != 1 else "bay_hl_win",p,.70,-PI*.5)
+	elif zone == 6:
+		for bank_d in [46.,124.,198.]:
+			for bay in range(6): furnish("lane_wall",loc(bank_d + bay*2.7,15.7),.68,-PI*.5)
 	for i in range(28):
 		var d = rng.randf_range(0, length)
 		var p = loc(d, rng.randf_range(-6, 6))
 		put(
 			"rock",
-			"#d9c5a4",
+			"wet_stone",
 			p,
-			Vector3(rng.randf_range(.5, 2), .075, rng.randf_range(.45, 1.2)),
+			Vector3(rng.randf_range(.25, .76), .075, rng.randf_range(.24, .65)),
 			Vector3(0, rng.randf_range(-1, 1), 0)
 		)
 	for b in beats:
 		var model = str(b.model)
 		var p = point(b.at)
+		if zone == 4 and model in ["Valer","Aldric"]: refectory(p,model == "Aldric")
+		if zone == 4 and model == "Aldric":
+			furnish("table_trestle",p+Vector3(1.44,0,-.07),.84)
+			furnish("bench",p+Vector3(2.69,0,-.03),.83,PI*.5)
+			furnish("candle_cluster",p+Vector3(1.88,.70,.04),.58)
 		if model in PEOPLE:
 			if not people.has(model):
 				var person = Actor.new()
@@ -537,8 +558,8 @@ func setup(index: int, beats: Array, quality: bool):
 	for i in range(4):
 		var p = loc((i + 1) * length / 5., -13 if i % 2 else 13)
 		if zone in [0, 1, 3, 4]:
-			props(
-				["table_long_decorated_A", "shelf_large", "bed_decorated", "crates_stacked"][i],
+			furnish(
+				["table_laid", "shelf_tall", "bed", "crate_stack"][i],
 				p,
 				.82,
 				i * .8
@@ -593,7 +614,7 @@ func basin(p: Vector3, w = 1.0):
 func landmark(kind: String, p: Vector3):
 	match kind:
 		"bowl":
-			props("table_medium_tablecloth", p, .73)
+			furnish("table_trestle", p, .73)
 			put("pot", "#ab7854", p + Vector3.UP * .73, Vector3(.6, .15, .6))
 			for j in range(3):
 				put(
@@ -602,13 +623,13 @@ func landmark(kind: String, p: Vector3):
 					p + Vector3((j - 1) * .13, .89, .13 if j == 1 else 0.),
 					Vector3(.14, .09, .11)
 				)
-			props("chair", p + Vector3(-1.22, 0, 0), .8, PI / 2)
-			props("chair", p + Vector3(.9, 0, -1.2), .75, -.7)
+			furnish("armchair", p + Vector3(-1.22, 0, 0), .8, PI / 2)
+			furnish("armchair", p + Vector3(.9, 0, -1.2), .75, -.7)
 		"lamp":
-			props("table_medium_tablecloth", p, .63)
+			furnish("table_trestle", p, .63)
 			put("pot", "#b27b53", p + Vector3.UP * .65, Vector3(.51, .35, .51))
-			props("candle_triple", p + Vector3(.38, .64, .1), .53)
-		"fish", "mark", "trace":
+			furnish("candle_cluster", p + Vector3(.38, .64, .1), .53)
+		"fish":
 			put("rock", "#bc805b", p + Vector3.UP * .2, Vector3(1.3, .42, .67))
 			put(
 				"cone",
@@ -617,37 +638,45 @@ func landmark(kind: String, p: Vector3):
 				Vector3(.52, .62, .52),
 				Vector3(0, 0, 1.58)
 			)
+		"log":
+			furnish("log", p + Vector3(2.5, 0, 0), 1.3, .34)
+		"shelter":
+			scenery("lodge_shell", p + Vector3(5.5, 0, -1), 5.8)
+			furnish("candle_cluster", p + Vector3(.8, 0, .5))
 		"wall":
 			block(p + Vector3(-3.5, 0, 0), Vector3(4.8, 1.14, .67), "#baab8b")
 			block(p, Vector3(2.15, .68, .66), "#c9ae85")
 			block(p + Vector3(3.5, 0, 0), Vector3(4.8, 1.14, .67), "#baab8b")
 		"basin", "portal", "well":
-			basin(p, 1.55)
-			arch(p + Vector3(0, 0, -1.7), 1.72, 2.4)
+			if kind == "well":
+				furnish("court_fountain",p,.56)
+			else:
+				basin(p,.88)
 			tree(p + Vector3(-3.7, 0, 1.3), 5.3)
 		"desk":
-			props("table_long_decorated_A", p, .78, PI / 2)
-			props("chair", p + Vector3(0, 0, -1.5), .76)
+			furnish("table_laid", p, .78, PI / 2)
+			furnish("armchair", p + Vector3(0, 0, -1.5), .76)
 			block(p + Vector3(0, .8, .1), Vector3(.79, .08, .52), "#c18a65")
-		"gate", "vista", "stone":
-			arch(p, 2.7, 2.45)
-			put("shaft", "#bc9574", p + Vector3(3.5, 0, 2), Vector3(1.2, 1.6, 1.2))
+		"gate", "stone":
+			furnish("lane_wall",p+Vector3(2.8,0,-1.15),.62,.12)
+		"vista":
+			furnish("bench_stone",p+Vector3(-1.65,0,.4),.90,.17)
 		"pillar", "bell":
 			put("shaft", "#dec79d", p, Vector3(2.65, 3.3, 2.65))
-			props("banner_patternB_blue", p + Vector3(0, 0, .36), .84)
+			furnish("banner_sheaf", p + Vector3(0, 0, .36), .84)
 		"stall":
 			shop(p, 1)
-			props("barrel_small_stack", p + Vector3(2.4, 0, 1), .79)
+			furnish("cask_stack", p + Vector3(2.4, 0, 1), .79)
 		"bed":
-			props("bed_decorated", p, .85)
-			props("shelf_small_candles", p + Vector3(1.8, 0, -1), .8)
+			furnish("bed", p, .85)
+			furnish("bedside", p + Vector3(1.8, 0, -1), .8)
 		"chest":
-			props("chest", p, .95)
+			furnish("chest", p, .95)
 		"wheel":
 			mill(p)
 		"pipe":
 			basin(p, 1.35)
-			arch(p + Vector3(0, 0, -.85), 1.18, 1.35, false, "#b29d7d")
+			furnish("lane_wall",p + Vector3(0,0,-1.75),.47)
 			put(
 				"rod",
 				"#ac7957",
@@ -683,72 +712,66 @@ func frame(delta: float, player: Vector3, walking_guide = false):
 	if ring:
 		ring.scale = Vector3.ONE * (1.0 + sin(clock * 2) * .045)
 	for actor in actors:
-		if walking_guide and actor.title == "Tamar":
+		if actor in directed or (walking_guide and actor.title == "Aldric"):
 			continue
 		if actor.position.distance_squared_to(player) < 42:
 			actor.face(player)
 		actor.motion(0, Vector3.ZERO, delta)
 
 
+# An open-front refectory and a separate serving bay on the lamp terrace.
+# The player's approach remains open. Walls, the hatch, the tables and the
+# serving hand all use the same finished floor level on this sloping site.
+func refectory(p: Vector3, serving: bool):
+	var floor_size = Vector3(11.,.14,8.4)
+	block(p-Vector3.UP*.13,floor_size,"wet_stone")
+	for x in [-5.25,5.25]:
+		block(p+Vector3(x,0,-1.63),Vector3(.42,2.8,4.9),"wet_stone")
+		obstacles.append(Vector4(p.x+x,p.z-1.63,.21,2.45))
+		for z in [1.32,3.9]: block(p+Vector3(x,0,z),Vector3(.23,3.48,.26),"sawn")
+	# Serving window in the return wall, or a closed wall behind the benches.
+	for run_ in [[-5.4,.55],[2.97,5.4]] if serving else [[-5.4,5.4]]:
+		var x = (run_[0]+run_[1])*.5; var w = run_[1]-run_[0]
+		block(p+Vector3(x,0,-4.05),Vector3(w,3.5,.48),"plaster")
+		obstacles.append(Vector4(p.x+x,p.z-4.05,w*.5,.24))
+	if serving:
+		block(p+Vector3(1.76,0,-4.05),Vector3(2.42,1.04,.48),"wet_stone")
+		block(p+Vector3(1.76,1.04,-4.05),Vector3(2.72,.12,.84),"sawn")
+		block(p+Vector3(1.76,2.40,-4.05),Vector3(2.42,1.1,.48),"plaster")
+		obstacles.append(Vector4(p.x+1.76,p.z-4.05,1.21,.24))
+		block(p+Vector3(1.4,0,-6.15),Vector3(5.4,3.35,.35),"wet_stone")
+		furnish("shelf_tall",p+Vector3(1.4,0,-5.48),1.,-.08)
+		furnish("pot",p+Vector3(1.35,1.15,-3.99),.50,.21)
+		furnish("jar_storage",p+Vector3(4.1,0,-3.19),.86)
+	else:
+		furnish("table_laid",p+Vector3(1.3,0,-.4),.87)
+		furnish("bench",p+Vector3(2.35,0,-.4),.91,PI*.5)
+	for z in [-3.5,-.6,2.3]:
+		block(p+Vector3(0,3.4,z),Vector3(11.35,.24,.22),"sawn")
+	# Broad shed roof; daylight enters through the front and side clerestories.
+	put("box","sawn",p+Vector3(0,3.83,-.25),Vector3(11.8,.23,9.65),Vector3(-.055,0,0))
+	var lamp_at = p+Vector3(-2.2,2.65,.39)
+	furnish("lamp_lantern",lamp_at,.67)
+	var light = OmniLight3D.new(); add_child(light); light.position = lamp_at+Vector3.DOWN*.23
+	light.omni_range = 7.; light.light_energy = 1.65; light.light_color = Color("ffd0a0")
+
+
 func district_art():
-	if zone == 0:
-		var center_ = loc(11, -3)
-		# The orphanage's shaded open-sided dining gallery, opening onto the courtyard.
-		put(
-			"sheet",
-			"#677b74",
-			center_ + Vector3.UP * 4.36,
-			Vector3(13.0, 1, 11),
-			Vector3(.04, 0, -.07)
-		)
-		for x in [-6.05, 6.05]:
-			for z in [-5.1, 5.1]:
-				var p = center_ + Vector3(x, 0, z)
-				beam(p, p + Vector3.UP * 4.66, .26, "#725442")
-				block(p, Vector3(.55, .49, .55), "#988469")
-		for z in [-5.1, 5.1]:
-			beam(center_ + Vector3(-6.25, 4.4, z), center_ + Vector3(6.25, 4.36, z), .32, "#725442")
-		props("shelf_large", center_ + Vector3(-4.9, 0, -1), 1.13, PI / 2)
-		props("crates_stacked", center_ + Vector3(-4.7, 0, 2), .95)
-		# Small aprons and handwoven runner connect the dining setting to the later school.
-		for z in range(4):
-			put(
-				"box",
-				"#776050" if z % 2 else "#527373",
-				loc(8 + z * 1.04, 2) + Vector3.UP * .035,
-				Vector3(3, .035, 1.03)
-			)
-		scenery("inn", loc(4, -10.1), 7.5, PI * .54)
-		scenery("well", loc(128, 11.2), 3.1)
-		scenery("crop", loc(151, -11), 1.5, .25)
-	elif zone == 1:
+	if zone == 1:
 		for i in range(7):
 			scenery(
-				"market", loc(12 + i * 19, -11 if i % 2 else 11), 3.25, PI / 2 if i % 2 else -PI / 2
+				"market_stall_a", loc(12 + i * 19, -11 if i % 2 else 11), 3.25, PI / 2 if i % 2 else -PI / 2
 			)
 	elif zone in [2, 3, 4, 5]:
-		scenery("academy", loc(95, -64), 29., .4)
-		scenery("tower", loc(77, -51), 15., -.7)
-		scenery("lodge", loc(66, 32), 11., -.75)
+		scenery("inn_shell", loc(95, -64), 11., .4)
+		scenery("cap_tower", loc(77, -51), 15., -.7)
+		scenery("lodge_shell", loc(66, 32), 11., -.75)
 	else:
-		scenery("tower", loc(66, -32), 13., PI / 2)
-		scenery("lodge", loc(144, 44), 12., -.67)
+		scenery("cap_tower", loc(66, -32), 13., PI / 2)
+		scenery("lodge_shell", loc(144, 44), 12., -.67)
 
 	# Bespoke silhouettes anchor the teaching route; all ornament below shares draw batches.
 	match zone:
-		0:
-			for d in range(0, 75, 7):
-				var p = loc(d, -13.7)
-				arch(p, 2.15, 1.6, true, "#d7c5a5")
-				block(p + Vector3.UP * 4.5, Vector3(3.5, .4, 7.1), "#b39071")
-			for i in range(4):
-				props("bed_decorated", loc(7 + i * 6.4, 11.8), .85, PI * .5)
-			for i in range(3):
-				var p = loc(10, 2) + Vector3(-.24 + i * .16, .88, .02)
-				put("leaf", "#747345", p, Vector3(.15, .077, .10))
-			for d in [30, 68, 99]:
-				arch(loc(d, 0), 3.1, 2.3)
-				props("banner_patternA_red", loc(d, -3.4), .85)
 		1:
 			for d in range(28, 142, 17):
 				var p = loc(d, 0)
@@ -762,23 +785,23 @@ func district_art():
 				for x in [-5, 5]:
 					beam(p + Vector3(x, 0, 0), p + Vector3(x, 5.9, 0), .22, "#81603f")
 			for i in range(6):
-				props("barrel_large_decorated", loc(22 + i * 17, 11.0), .7 + i % 3 * .1)
+				furnish("cask", loc(22 + i * 17, 11.0), .7 + i % 3 * .1)
 		2:
 			for i in range(3):
 				var p = loc(32 + i * 5.5, -8)
 				put("shaft", "#dcc6a3", p, Vector3(2.2, 4.5 + i * .3, 2.2))
-				props(
-					"banner_patternB_blue" if i == 1 else "banner_patternA_red",
+				furnish(
+					"banner_sheaf",
 					p + Vector3(0, .7, .23),
 					1.15
 				)
-			for i in range(8):
-				put(
-					"pot",
-					"#bd7f58",
-					loc(93 + i * 2.8, 12 + (i % 2) * 2),
-					Vector3.ONE * (1. + i % 3 * .47)
-				)
+			# The fired store jar is man-sized; test pots, kiln fuel and
+			# the sorting table form a work spot, not an avenue of giants.
+			scenery("jar_storage",loc(101.4,12.8),1.74,.2)
+			for pair in [[98.2,11.5],[98.8,12.2],[99.4,11.7],[102.7,13.]]:
+				furnish("pot",point(pair),rng.randf_range(.61,1.13),rng.randf_range(-PI,PI))
+			furnish("table_trestle",loc(99.3,9.9),.86,-.72)
+			furnish("cask_stack",loc(102.3,15.),.78,.3)
 			for i in range(14):
 				var p = loc(145 + i * 5, 30)
 				tree(p, 4.5)
@@ -786,14 +809,17 @@ func district_art():
 		3, 4:
 			for row in range(3):
 				var p = loc(20 + row * 89, 0)
-				arch(p, 3.2, 3.4)
-				block(p + Vector3.UP * 7.55, Vector3(10, .48, 2.2), "#caaa81")
-				props("banner_patternB_blue", p + Vector3(-3.9, 1.4, .41), 1.13)
+				furnish("bench_stone",p+Vector3(-3.1,0,.4),1.,.12)
+				var mast = p+Vector3(-4.7,0,.15)
+				beam(mast,mast+Vector3.UP*3.15,.11,"sawn")
+				furnish("banner_sheaf", mast-Vector3(0,0,.04), .97)
 			for i in range(5):
-				props("shelf_large", loc(60 + i * 4.6, 13.3), .8, PI * .5)
-				props("chair", loc(105 + i * 4.2, -11.2), .76)
-			for i in range(12):
-				put("pot", "#b37b53", loc(35 + i * 4, 10.4), Vector3(.6, .75, .6))
+				furnish("shelf_tall", loc(60 + i * 4.6, 13.3), .8, PI * .5)
+				furnish("armchair", loc(105 + i * 4.2, -11.2), .76)
+			for d in [38.,83.,137.]:
+				furnish("table_laid",loc(d,8.6),.89,-.23)
+				furnish("jar_storage",loc(d+1.2,9.7),.76,-.25)
+				furnish("pot",loc(d-.9,9.4),.69,.13)
 		5:
 			for d in [27, 116, 170]:
 				var p = loc(d, -3)
@@ -820,25 +846,14 @@ func district_art():
 		6:
 			for d in [37, 83, 140, 186]:
 				var p = loc(d, 0)
-				arch(p, 4.05, 2.7)
-				block(p + Vector3.UP * 7.92, Vector3(10.5, .55, 2.1), "#ada28c")
-				for x in [-8.5, 8.5]:
-					put(
-						"rod",
-						"#b17e53",
-						loc(d, x) + Vector3.UP * .36,
-						Vector3(1.05, 9.6, 1.05),
-						Vector3(PI / 2, 0, 0)
-					)
+				furnish("log",p+Vector3(7.1,0,.93),1.35,.32)
+				var rack = loc(d,9.7)
+				for post in [-1.5,1.5]:
+					beam(rack+Vector3(0,-.13,post),rack+Vector3(0,.88,post),.18,"sawn")
+				beam(rack+Vector3(0,.71,-1.65),rack+Vector3(0,.79,1.65),.16,"sawn")
 	for i in range(25):
 		var p = loc(rng.randf_range(1, length), rng.randf_range(14, 21) * (-1 if i % 2 else 1))
-		put(
-			"pot",
-			["#ad7251", "#c58c63", "#b5a17c"][i % 3],
-			p,
-			Vector3.ONE * rng.randf_range(.6, 1.45)
-		)
-		put("rod", "#785941", p + Vector3.UP * .12, Vector3(.8, .11, .8))
+		if zone != 2 or -p.z > 45.: furnish("pot" if i % 3 else "jar_storage",p,rng.randf_range(.62,1.38),i*.79)
 
 
 func person_on_set(who: String, where: Vector3):
@@ -858,7 +873,7 @@ func ensemble(pages: Array, at: Vector3, player: Vector3):
 	var voices = []
 	for line in pages:
 		var who = str(line[0])
-		if who == "İlyan" or (who == "Mina" and zone > 0) or (who == "Hedi" and zone > 0):
+		if who == "Lyander" or (who == "Lyra" and zone > 0) or (who == "Matilda" and zone > 0):
 			continue
 		if who not in PEOPLE and who not in ["Boyacı", "Çömlekçi", "Değirmenci", "Mektupçu"]:
 			continue
@@ -915,7 +930,7 @@ func mill(p: Vector3):
 	t.rings = 40
 	t.ring_segments = 6
 	r.mesh = t
-	r.material_override = material("#805a3c")
+	r.material_override = Surfaces.get_material("boards",.86)
 	r.rotation.x = PI / 2
 	crank.add_child(r)
 	for i in range(8):
@@ -925,15 +940,20 @@ func mill(p: Vector3):
 		bar.scale = Vector3(.09, 1.12, .13)
 		bar.rotation.z = -a
 		bar.position = Vector3(sin(a), cos(a), 0) * .55
-		bar.material_override = material("#b79158")
+		bar.material_override = Surfaces.get_material("boards",.91)
 		crank.add_child(bar)
 		var vane = MeshInstance3D.new()
 		vane.mesh = geometry("box")
 		vane.scale = Vector3(.39, .2, .45)
 		vane.position = bar.position * 2.09
 		vane.rotation.z = -a
-		vane.material_override = material("#986a49")
+		vane.material_override = Surfaces.get_material("boards",.91)
 		crank.add_child(vane)
+	# Axle and trestles carry the wheel over a masonry race.
+	for dz in [-.86,.81]:
+		var pivot = crank.position + Vector3(0,0,dz)
+		for sgn in [-1.,1.]: beam(pivot+Vector3(sgn*.92,-1.28,0),pivot,.16,"sawn")
+	beam(crank.position+Vector3(0,0,-1.02),crank.position+Vector3(0,0,.97),.255,"sawn")
 	var trough = MeshInstance3D.new()
 	var q = PlaneMesh.new()
 	q.size = Vector2(2.6, 8.6)
@@ -942,7 +962,7 @@ func mill(p: Vector3):
 	trough.position = p + Vector3.UP * .18
 	add_child(trough)
 	for x in [-1.44, 1.44]:
-		block(p + Vector3(x, 0, 0), Vector3(.30, .44, 8.7), "#aeaa90")
+		block(p + Vector3(x, 0, 0), Vector3(.30, .44, 8.7), "wet_stone")
 	var twig = MeshInstance3D.new()
 	twig.mesh = geometry("rod")
 	twig.material_override = material("#725039")

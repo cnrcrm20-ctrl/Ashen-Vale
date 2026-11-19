@@ -21,13 +21,19 @@ s=Path('build/import.log').read_text()
 s=re.sub(r'^ERROR: (?:Required extension VK_KHR_surface not found\.|Condition "err != OK" is true\. Returning: err)\n\s+at: [^\n]+drivers/vulkan/[^\n]+\n','',s,flags=re.M)
 if re.search(r'^ERROR:|SCRIPT ERROR:|Parse Error:|Compile Error:',s,re.M):raise SystemExit(s[-12000:])
 CHECK
-timeout 120 "$GODOT" --headless --path game --script res://tests/chapter_test.gd 2>&1 | tee build/smoke.log
-if grep -E 'SCRIPT ERROR:|^ERROR:' build/smoke.log; then exit 1; fi
+timeout 90 "$GODOT" --headless --path game --script res://tests/voices_test.gd 2>&1 | tee build/voices.log
+if grep -E 'SCRIPT ERROR:|SHADER ERROR:|Program linking failed|^ERROR:' build/voices.log; then exit 1; fi
+grep -q 'VOICE_NIGHT_SMOKE PASS' build/voices.log
+timeout 90 "$GODOT" --headless --path game --script res://tests/forest_test.gd 2>&1 | tee build/forest.log
+if grep -E 'SCRIPT ERROR:|SHADER ERROR:|Program linking failed|^ERROR:' build/forest.log; then exit 1; fi
+grep -q 'FOREST_SMOKE PASS' build/forest.log
+timeout 150 "$GODOT" --headless --path game --script res://tests/chapter_test.gd 2>&1 | tee build/smoke.log
+if grep -E 'SCRIPT ERROR:|SHADER ERROR:|Program linking failed|^ERROR:' build/smoke.log; then exit 1; fi
 grep -q 'CHAPTER_SMOKE PASS' build/smoke.log
 if command -v xvfb-run >/dev/null; then
-  LIBGL_ALWAYS_SOFTWARE=1 timeout 100 xvfb-run -a "$GODOT" --path game --audio-driver Dummy --rendering-method gl_compatibility --resolution 1280x720 --script res://tests/visual.gd 2>&1 | tee build/visual.log
+  LIBGL_ALWAYS_SOFTWARE=1 timeout 240 xvfb-run -a "$GODOT" --path game --audio-driver Dummy --rendering-method gl_compatibility --resolution 1280x720 --fixed-fps 24 --script res://tests/visual.gd 2>&1 | tee build/visual.log
   grep -q 'VISUAL_SMOKE PASS' build/visual.log
-  if grep -E 'SCRIPT ERROR:|^ERROR:' build/visual.log; then exit 1; fi
+  if grep -E 'SCRIPT ERROR:|SHADER ERROR:|Program linking failed|^ERROR:' build/visual.log; then exit 1; fi
 fi
 "$GODOT" --headless --path game --export-release Android "$OUT/episode1-unsigned.apk" >build/export.log 2>&1 || { tail -80 build/export.log; exit 1; }
 BT=$(find "$ANDROID_HOME/build-tools" -maxdepth 1 -mindepth 1 -type d | sort -V | tail -1)
@@ -37,6 +43,6 @@ BT=$(find "$ANDROID_HOME/build-tools" -maxdepth 1 -mindepth 1 -type d | sort -V 
 if grep -q "android.permission.INTERNET" build/badging.log; then exit 1; fi
 grep -q "native-code:.*arm64-v8a.*x86_64" build/badging.log
 grep -q ^launchable-activity build/badging.log
-cat build/badging.log; grep -q "package: name='com.ashenvale.episodeone'" build/badging.log
+cat build/badging.log; grep -Fq "package: name='com.ashenvale.episodeone.preview' versionCode='10002' versionName='1.1-dev'" build/badging.log
 unzip -tq "$OUT/Ashen-Vale-Episode-1.apk" >/dev/null
 sha256sum "$OUT/Ashen-Vale-Episode-1.apk"

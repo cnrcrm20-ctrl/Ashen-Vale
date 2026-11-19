@@ -2,7 +2,7 @@ name: Ashen Vale · Android
 on:
   workflow_dispatch:
   push:
-    branches: [arena/719cd1f5-ashen-vale]
+    branches: [arena/f502d2c5-ashen-vale]
 permissions:
   contents: write
 jobs:
